@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smith & Dean — The Iterative Cyclic Web</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #ffffff;
+    color: #111111;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  canvas { display: block; }
+
+  #ui {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100; padding: 16px 24px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    pointer-events: none;
+  }
+  #title-block { pointer-events: auto; }
+  #title-block h1 {
+    font-size: 16px; font-weight: 800; letter-spacing: 0.05em;
+    text-transform: uppercase; color: #111111;
+  }
+  #title-block p { font-size: 13px; color: #2b2b2b; margin-top: 4px; font-weight: 500; }
+
+  #view-toggle {
+    pointer-events: auto; display: flex; gap: 2px;
+    background: rgba(255,255,255,0.96); border-radius: 10px; padding: 3px;
+    backdrop-filter: blur(16px); border: 1px solid rgba(0,0,0,0.14);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  .vbtn {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700;
+    padding: 9px 18px; border: none; border-radius: 7px; cursor: pointer;
+    background: transparent; color: #4a4a4a; transition: all 0.2s;
+  }
+  .vbtn.active { background: #111111; color: #ffffff; }
+  .vbtn:hover:not(.active) { color: #111111; }
+
+  #info-panel {
+    position: fixed; bottom: 24px; left: 24px; z-index: 100; pointer-events: none; max-width: 440px;
+  }
+  #node-info {
+    pointer-events: auto;
+    background: rgba(255,255,255,0.98); backdrop-filter: blur(24px);
+    border: 1px solid rgba(0,0,0,0.14); border-radius: 12px;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.1);
+    padding: 20px 24px; opacity: 0; transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  #node-info.visible { opacity: 1; transform: translateY(0); }
+  #node-info .tag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 4px; margin-bottom: 10px;
+  }
+  .tag-practice { background: #e9e9e9; color: #111111; }
+  .tag-research { background: #dedede; color: #111111; }
+  .tag-output { background: #f0f0f0; color: #111111; }
+  .tag-central { background: #111111; color: #ffffff; }
+  #node-info h2 { font-size: 18px; font-weight: 800; margin-bottom: 8px; line-height: 1.35; color: #111111; }
+  #node-info p { font-size: 14px; line-height: 1.7; color: #202020; font-weight: 500; }
+
+  #controls-hint {
+    position: fixed; bottom: 24px; right: 24px; z-index: 100;
+    font-size: 12px; color: #1f1f1f; text-align: right; line-height: 1.9;
+    pointer-events: none; font-weight: 600;
+  }
+  kbd {
+    display: inline-block; padding: 2px 7px; border: 1px solid #111111; border-radius: 4px;
+    font-family: 'Inter', sans-serif; color: #111111; background: #ffffff; font-size: 10px; font-weight: 700;
+  }
+
+  #legend {
+    position: fixed; top: 56px; left: 24px; z-index: 100;
+    font-size: 11px; pointer-events: none;
+    display: flex; flex-direction: column; gap: 6px; font-weight: 600;
+  }
+  .leg { display: flex; align-items: center; gap: 8px; color: #111111; }
+  .lsw { width: 22px; height: 4px; border-radius: 2px; }
+
+  #crosshair {
+    position: fixed; top: 50%; left: 50%; width: 20px; height: 20px;
+    margin: -10px 0 0 -10px; z-index: 90; pointer-events: none;
+    opacity: 0; transition: opacity 0.3s;
+  }
+  #crosshair.show { opacity: 0.55; }
+  #crosshair::before, #crosshair::after { content: ''; position: absolute; background: #111111; }
+  #crosshair::before { width: 2px; height: 100%; left: 9px; top: 0; }
+  #crosshair::after { width: 100%; height: 2px; top: 9px; left: 0; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  <div id="title-block">
+    <h1>The Iterative Cyclic Web</h1>
+    <p>Smith & Dean (2009) — Practice-led Research, Research-led Practice</p>
+  </div>
+  <div id="view-toggle">
+    <button class="vbtn active" data-view="topdown">Map View</button>
+    <button class="vbtn" data-view="immersive">Walk the Path</button>
+  </div>
+</div>
+
+<div id="legend">
+  <div class="leg"><div class="lsw" style="background:#111111;"></div>Creative practice (clockwise)</div>
+  <div class="leg"><div class="lsw" style="background:#2b2b2b;"></div>Research (anticlockwise)</div>
+  <div class="leg"><div class="lsw" style="background:#4a4a4a;"></div>Outputs</div>
+</div>
+
+<div id="info-panel">
+  <div id="node-info">
+    <div class="tag tag-central" id="info-tag">—</div>
+    <h2 id="info-title">—</h2>
+    <p id="info-desc">—</p>
+  </div>
+</div>
+
+<div id="controls-hint">
+  <span id="hint-td"><kbd>Scroll</kbd> zoom · <kbd>Drag</kbd> rotate · <kbd>Click</kbd> node</span>
+  <span id="hint-fp" style="display:none"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Mouse</kbd> look · Click to lock</span>
+</div>
+
+<div id="crosshair"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const R = 22;
+const PRAC = 0x111111;
+const RES = 0x2b2b2b;
+const OUT = 0x4a4a4a;
+const CEN = 0x000000;
+
+const mainNodes = [
+  { id:'idea', label:'Idea\nGeneration', angle:0, cat:'central',
+    desc:'The starting and recurring point. New ideas emerge from the collision of creative intuition and research insight. Both paths pass through here.' },
+  { id:'p1', label:'Idea Selection', sub:'(subjective or systematic)', angle:40, cat:'practice',
+    desc:'Choosing which ideas to pursue. May be intuitive or methodical — both are legitimate. The practitioner commits a direction.' },
+  { id:'p2', label:'Investigate &\nExtrapolate', sub:'from the ideas', angle:80, cat:'practice',
+    desc:'Exploring the chosen idea through making — prototyping, sketching, coding, composing. Following where the material leads.' },
+  { id:'p3', label:'Develop\nChosen Ideas', angle:130, cat:'practice',
+    desc:'Sustained development of the work. Refining, iterating, building out. The practice deepens.' },
+  { id:'p4', label:'Theorise Ideas\n& Develop Techniques\nas Method', angle:185, cat:'practice',
+    desc:'The practitioner begins to articulate what they are doing and why — developing techniques into transferable methods.' },
+  { id:'p5', label:'Apply Theories\n& Techniques to\nNew Creative Work', angle:235, cat:'practice',
+    desc:'Methods and theories developed from practice are fed back into new creative work. The cycle continues.' },
+  { id:'r1', label:'Select Empirical\nApproach', sub:'(subjective or systematic)', angle:-40, cat:'research',
+    desc:'Choosing a research methodology — qualitative, quantitative, mixed, experimental, ethnographic.' },
+  { id:'r2', label:'Investigate Data,\nIdeas & Relevant\nTheory', angle:-80, cat:'research',
+    desc:'Engaging with existing literature, data, and theory. Contextualising the work within what is already known.' },
+  { id:'r3', label:'Develop, Interpret\n& Synthesise New\nData or Ideas', angle:-130, cat:'research',
+    desc:'Producing new interpretations, synthesising findings, developing original theoretical positions.' },
+  { id:'r4', label:'Test or Refine\nTheory', sub:'through comparison\nand argument', angle:-185, cat:'research',
+    desc:'Subjecting the theory to scrutiny — does it hold against the evidence? Against competing accounts?' },
+];
+
+const outputNodes = [
+  { id:'o1', label:'Output:\nArtwork', parent:'p3', off:22, cat:'output',
+    desc:'The creative artefact — installation, performance, composition, software, system.' },
+  { id:'o2', label:'Output:\nDocumentation of\nArtwork & Production', parent:'p3', off:-15, cat:'output',
+    desc:'Process documentation, video, photography, code repositories — the record of how the work was made.' },
+  { id:'o3', label:'Output:\nTheories &\nTechniques', parent:'p4', off:18, cat:'output',
+    desc:'Transferable methods, frameworks, and techniques that emerge from the practice.' },
+  { id:'o4', label:'Output:\nNew Technique,\nTheory or Paradigm', parent:'r4', off:-18, cat:'output',
+    desc:'New theoretical contributions — paradigms, models, frameworks that advance the field.' },
+  { id:'o5', label:'Output:\nMethods, Results,\nPublications', parent:'r3', off:-22, cat:'output',
+    desc:'Research publications, datasets, critical accounts — the formal textual outputs.' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// THREE SETUP — no shadows, ACES tonemapping
+// ═══════════════════════════════════════════════════════════════
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xffffff);
+scene.fog = new THREE.FogExp2(0xffffff, 0.0025);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+document.body.appendChild(renderer.domElement);
+
+const tdCam = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 400);
+const fpCam = new THREE.PerspectiveCamera(72, window.innerWidth/window.innerHeight, 0.1, 400);
+fpCam.position.set(0, 2.5, 0);
+let cam = tdCam;
+let mode = 'topdown';
+
+const d2r = d => d * Math.PI / 180;
+function atp(deg, radius) {
+  const r = d2r(deg - 90);
+  return new THREE.Vector3(Math.cos(r)*radius, 0, Math.sin(r)*radius);
+}
+function catColor(c) { return c==='practice'?PRAC:c==='research'?RES:c==='output'?OUT:CEN; }
+
+// ═══════════════════════════════════════════════════════════════
+// TEXT SPRITE
+// ═══════════════════════════════════════════════════════════════
+function makeSprite(text, color, size, bold) {
+  const c = document.createElement('canvas');
+  const ctx = c.getContext('2d');
+  const lines = text.split('\n');
+  const fs = 82, lh = fs * 1.2;
+  c.width = 1024; c.height = lines.length * lh + 48;
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  roundRect(ctx, 24, 0, c.width - 48, c.height, 16); ctx.fill();
+  ctx.fillStyle = color || '#111111';
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 5;
+  ctx.font = `${bold?'800':'600'} ${fs}px Inter, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  lines.forEach((l,i) => {
+    const y = 24 + i*lh;
+    ctx.strokeText(l, c.width/2, y);
+    ctx.fillText(l, c.width/2, y);
+  });
+  const tex = new THREE.CanvasTexture(c);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, sizeAttenuation: true });
+  const sprite = new THREE.Sprite(mat);
+  const s = size || 8;
+  sprite.scale.set(s, s * c.height / c.width, 1);
+  return sprite;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y); ctx.closePath();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENVIRONMENT — flat ground, BasicMaterial, no shadows
+// ═══════════════════════════════════════════════════════════════
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshBasicMaterial({ color: 0xfafafa })
+);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+// Subtle concentric rings
+for(let i=1; i<=6; i++) {
+  const rr = R * i * 0.22;
+  const g = new THREE.RingGeometry(rr - 0.03, rr + 0.03, 48);
+  const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.08, side: THREE.DoubleSide }));
+  m.rotation.x = -Math.PI/2; m.position.y = 0.01;
+  scene.add(m);
+}
+
+function addThickLine(start, end, color, radius, opacity) {
+  const dir = end.clone().sub(start);
+  const len = dir.length();
+  if (len <= 0.0001) return;
+  const mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius, radius, len, 12),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity })
+  );
+  mesh.position.copy(start).add(end).multiplyScalar(0.5);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+  scene.add(mesh);
+}
+
+// Vertical line markers at each main node (replacing monoliths — just lines, zero draw cost)
+mainNodes.forEach(n => {
+  if(n.id === 'idea') return;
+  const pos = atp(n.angle, R);
+  const col = catColor(n.cat);
+  const h = 8 + Math.random()*4;
+  addThickLine(new THREE.Vector3(pos.x, 0, pos.z), new THREE.Vector3(pos.x, h, pos.z), col, 0.08, 0.38);
+});
+
+// Central vertical line
+addThickLine(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 14, 0), 0x111111, 0.12, 0.42);
+
+// ═══════════════════════════════════════════════════════════════
+// LIGHTING — minimal: 1 ambient + 2 coloured points + 1 centre
+// ═══════════════════════════════════════════════════════════════
+scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+
+const plP = new THREE.PointLight(PRAC, 0.5, 60);
+plP.position.set(R*0.6, 8, -R*0.5);
+scene.add(plP);
+
+const plR = new THREE.PointLight(RES, 0.5, 60);
+plR.position.set(-R*0.6, 8, R*0.5);
+scene.add(plR);
+
+const plG = new THREE.PointLight(0xffffff, 0.4, 15);
+plG.position.set(0, 1, 0);
+scene.add(plG);
+
+// ═══════════════════════════════════════════════════════════════
+// PATHS — tubes with MeshBasicMaterial (emissive look, zero lighting cost)
+// ═══════════════════════════════════════════════════════════════
+function makeRingCurve(dir) {
+  const pts = [];
+  for(let i=0; i<=128; i++){
+    const t = i/128;
+    const a = d2r(-90) + dir * t * Math.PI * 2;
+    pts.push(new THREE.Vector3(Math.cos(a)*R, 0, Math.sin(a)*R));
+  }
+  return new THREE.CatmullRomCurve3(pts, false);
+}
+
+const pracCurve = makeRingCurve(1);
+const resCurve = makeRingCurve(-1);
+
+// Ground strips (BasicMaterial)
+function makeStrip(radius, y, color) {
+  const w = 1.4, pts = [], segs = 96;
+  for(let i=0; i<=segs; i++){
+    const t = i/segs, a = d2r(-90) + t * Math.PI * 2;
+    const x = Math.cos(a)*radius, z = Math.sin(a)*radius;
+    const nx = -Math.sin(a), nz = Math.cos(a);
+    pts.push(new THREE.Vector3(x-nx*w, y, z-nz*w), new THREE.Vector3(x+nx*w, y, z+nz*w));
+  }
+  const idx = [];
+  for(let i=0; i<segs; i++){ const a=i*2,b=i*2+1,c=(i+1)*2,d=(i+1)*2+1; idx.push(a,c,b,b,c,d); }
+  const pos = new Float32Array(pts.length*3);
+  pts.forEach((p,i)=>{ pos[i*3]=p.x; pos[i*3+1]=p.y; pos[i*3+2]=p.z; });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setIndex(idx);
+  return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.16, side: THREE.DoubleSide }));
+}
+
+const pracStrip = makeStrip(R, 0.03, PRAC);
+const resStrip = makeStrip(R - 0.3, 0.02, RES);
+scene.add(pracStrip); scene.add(resStrip);
+const pracStripMat = pracStrip.material;
+const resStripMat = resStrip.material;
+
+// Elevated tubes (BasicMaterial — self-lit look)
+const pracTubeGeo = new THREE.TubeGeometry(pracCurve, 96, 0.28, 8, false);
+const pracTubeMat = new THREE.MeshBasicMaterial({ color: PRAC, transparent: true, opacity: 0.92 });
+const pracTube = new THREE.Mesh(pracTubeGeo, pracTubeMat);
+pracTube.position.y = 0.5;
+scene.add(pracTube);
+
+const resTubeGeo = new THREE.TubeGeometry(resCurve, 96, 0.28, 8, false);
+const resTubeMat = new THREE.MeshBasicMaterial({ color: RES, transparent: true, opacity: 0.92 });
+const resTube = new THREE.Mesh(resTubeGeo, resTubeMat);
+resTube.position.y = 0.9;
+scene.add(resTube);
+
+// Direction cones (BasicMaterial)
+function addCone(angleDeg, color, clockwise, y) {
+  const pos = atp(angleDeg, R);
+  const tangent = d2r(angleDeg - 90 + (clockwise ? 90 : -90));
+  const dir = new THREE.Vector3(Math.cos(tangent), 0, Math.sin(tangent)).normalize();
+  const cone = new THREE.Mesh(
+    new THREE.ConeGeometry(0.3, 1.2, 6),
+    new THREE.MeshBasicMaterial({ color })
+  );
+  cone.position.set(pos.x, y, pos.z);
+  cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+  scene.add(cone);
+}
+[20,65,110,157,210,265,315].forEach(a => addCone(a, PRAC, true, 0.6));
+[-20,-65,-110,-157,-210,-265,-315].forEach(a => addCone(a, RES, false, 1.0));
+
+// ═══════════════════════════════════════════════════════════════
+// NODES — no per-node lights, Lambert for spheres (only PBR-lit objects)
+// ═══════════════════════════════════════════════════════════════
+const allND = {};
+const clickables = [];
+
+function createNode(n, isOut) {
+  const group = new THREE.Group();
+  const col = catColor(n.cat);
+  const isC = n.id === 'idea';
+  const rad = isC ? 2.0 : isOut ? 0.85 : 1.3;
+  const nY = isC ? 3.5 : isOut ? 1.8 : 2.5;
+  const pos = isC ? new THREE.Vector3(0,0,0) : atp(n.angle, isOut ? R + 7 : R);
+
+  // Ground glow disc (BasicMaterial)
+  const disc = new THREE.Mesh(
+    new THREE.CircleGeometry(isC ? 4 : isOut ? 1.5 : 3, 16),
+    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.08, side: THREE.DoubleSide })
+  );
+  disc.rotation.x = -Math.PI/2; disc.position.y = 0.03;
+  group.add(disc);
+
+  // Pillar (BasicMaterial)
+  const pillar = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.07, nY, 6),
+    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.25 })
+  );
+  pillar.position.set(0, nY/2, 0);
+  group.add(pillar);
+
+  // Sphere (MeshLambertMaterial — only objects that need lighting)
+  const sMat = new THREE.MeshLambertMaterial({ color: col, emissive: col, emissiveIntensity: 0.5 });
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(rad, 16, 16), sMat);
+  sphere.position.y = nY;
+  sphere.userData = { nodeId: n.id, data: n };
+  group.add(sphere);
+  clickables.push(sphere);
+
+  // Glow shell (BasicMaterial, backside)
+  const gl = new THREE.Mesh(
+    new THREE.SphereGeometry(rad * 2.2, 8, 8),
+    new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.04, side: THREE.BackSide })
+  );
+  gl.position.y = nY;
+  group.add(gl);
+
+  // Label
+  const hexC = '#111111';
+  const label = makeSprite(n.label, hexC, isC ? 14 : isOut ? 8 : 11, true);
+  label.position.y = nY + rad + (isC ? 3.0 : isOut ? 1.4 : 2.0);
+  group.add(label);
+
+  if(n.sub) {
+    const sub = makeSprite(n.sub, '#303030', isOut ? 5 : 7, false);
+    sub.position.y = nY + rad + (isOut ? 0.4 : 0.7);
+    group.add(sub);
+  }
+
+  group.position.copy(pos);
+  scene.add(group);
+  allND[n.id] = { group, sphere, data: n, pos: pos.clone(), nY, gl, sMat };
+}
+
+mainNodes.forEach(n => createNode(n, false));
+
+outputNodes.forEach(o => {
+  const parent = mainNodes.find(n => n.id === o.parent);
+  if(!parent) return;
+  o.angle = parent.angle + o.off;
+  createNode(o, true);
+
+  // Connector line (not tube — just a Line)
+  const pPos = atp(parent.angle, R);
+  const oPos = atp(o.angle, R + 7);
+  addThickLine(new THREE.Vector3(pPos.x, 0.8, pPos.z), new THREE.Vector3(oPos.x, 0.8, oPos.z), OUT, 0.06, 0.4);
+});
+
+// Spokes to centre (Lines, not tubes)
+['p1','p3','p5','r1','r3','r4'].forEach(id => {
+  const n = allND[id]; if(!n) return;
+  addThickLine(new THREE.Vector3(0, 1.5, 0), new THREE.Vector3(n.pos.x, 1.5, n.pos.z), 0x111111, 0.045, 0.16);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// LABELS — path directions + three areas
+// ═══════════════════════════════════════════════════════════════
+const cpPos = atp(25, R + 4);
+const cpLabel = makeSprite('Creative practice  ➜', '#' + new THREE.Color(PRAC).getHexString(), 8, true);
+cpLabel.position.set(cpPos.x, 4, cpPos.z);
+cpLabel.material.opacity = 0.9;
+scene.add(cpLabel);
+
+const rsPos = atp(-25, R + 4);
+const rsLabel = makeSprite('➜  Research', '#' + new THREE.Color(RES).getHexString(), 8, true);
+rsLabel.position.set(rsPos.x, 4, rsPos.z);
+rsLabel.material.opacity = 0.9;
+scene.add(rsLabel);
+
+// Three areas of the cycle
+const arPos = atp(-90, R * 0.48);
+const arLabel = makeSprite('Academic\nresearch', '#2b2b2b', 9, true);
+arLabel.position.set(arPos.x, 2.5, arPos.z);
+arLabel.material.opacity = 0.75;
+scene.add(arLabel);
+
+const plrPos = atp(90, R * 0.48);
+const plrLabel = makeSprite('Practice-led\nresearch', '#1f1f1f', 9, true);
+plrLabel.position.set(plrPos.x, 2.5, plrPos.z);
+plrLabel.material.opacity = 0.75;
+scene.add(plrLabel);
+
+const rlpPos = atp(210, R * 0.48);
+const rlpLabel = makeSprite('Research-led\npractice', '#3a3a3a', 9, true);
+rlpLabel.position.set(rlpPos.x, 2.5, rlpPos.z);
+rlpLabel.material.opacity = 0.75;
+scene.add(rlpLabel);
+
+// ═══════════════════════════════════════════════════════════════
+// FLOW PARTICLES
+// ═══════════════════════════════════════════════════════════════
+const flowN = 120;
+const flowGeo = new THREE.BufferGeometry();
+const flowPos = new Float32Array(flowN*3);
+const flowCol = new Float32Array(flowN*3);
+const flowV = [];
+for(let i=0;i<flowN;i++){
+  const cw = i < flowN/2;
+  const a = Math.random()*Math.PI*2;
+  const rOff = R + (Math.random()-0.5)*3;
+  flowPos[i*3] = Math.cos(a)*rOff;
+  flowPos[i*3+1] = 0.3 + Math.random()*4;
+  flowPos[i*3+2] = Math.sin(a)*rOff;
+  const c = new THREE.Color(cw ? PRAC : RES);
+  flowCol[i*3]=c.r; flowCol[i*3+1]=c.g; flowCol[i*3+2]=c.b;
+  flowV.push({ a, rOff, yB: flowPos[i*3+1], spd: 0.003+Math.random()*0.007, cw, ph: Math.random()*6.28 });
+}
+flowGeo.setAttribute('position', new THREE.BufferAttribute(flowPos, 3));
+flowGeo.setAttribute('color', new THREE.BufferAttribute(flowCol, 3));
+scene.add(new THREE.Points(flowGeo, new THREE.PointsMaterial({ size: 0.12, transparent: true, opacity: 0.3, vertexColors: true, sizeAttenuation: true })));
+
+// ═══════════════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════════════
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let hovered = null, selected = null;
+
+const infoEl = document.getElementById('node-info');
+const tagEl = document.getElementById('info-tag');
+const titleEl = document.getElementById('info-title');
+const descEl = document.getElementById('info-desc');
+const crosshair = document.getElementById('crosshair');
+
+function tagClass(c){ return c==='practice'?'tag-practice':c==='research'?'tag-research':c==='output'?'tag-output':'tag-central'; }
+function tagText(c){ return c==='practice'?'Creative Practice Path':c==='research'?'Research Path':c==='output'?'Output':'Central Node'; }
+function showInfo(d){ tagEl.className='tag '+tagClass(d.cat); tagEl.textContent=tagText(d.cat); titleEl.textContent=d.label.replace(/\n/g,' '); descEl.textContent=d.desc; infoEl.classList.add('visible'); }
+function hideInfo(){ infoEl.classList.remove('visible'); selected=null; }
+
+renderer.domElement.addEventListener('mousemove', e => {
+  mouse.x = (e.clientX/window.innerWidth)*2-1;
+  mouse.y = -(e.clientY/window.innerHeight)*2+1;
+});
+
+renderer.domElement.addEventListener('click', () => {
+  if(mode==='immersive' && !document.pointerLockElement){ renderer.domElement.requestPointerLock(); return; }
+  raycaster.setFromCamera(mode==='immersive'?new THREE.Vector2(0,0):mouse, cam);
+  const hits = raycaster.intersectObjects(clickables);
+  if(hits.length>0){ selected=hits[0].object.userData.data; showInfo(selected); }
+  else hideInfo();
+});
+
+// Topdown orbit
+let tdAngle=0, tdDist=55, tdHeight=50, tdTgt=new THREE.Vector3(0,0,0);
+let drag=false, dBtn=-1, lx=0, ly=0;
+renderer.domElement.addEventListener('wheel', e=>{ if(mode!=='topdown') return; e.preventDefault(); tdDist=Math.max(20,Math.min(100,tdDist+e.deltaY*0.06)); },{passive:false});
+renderer.domElement.addEventListener('mousedown', e=>{ if(mode!=='topdown') return; drag=true; dBtn=e.button; lx=e.clientX; ly=e.clientY; });
+window.addEventListener('mousemove', e=>{ if(!drag||mode!=='topdown') return; const dx=e.clientX-lx,dy=e.clientY-ly; lx=e.clientX; ly=e.clientY; if(dBtn===0){ tdAngle-=dx*0.005; tdHeight=Math.max(8,Math.min(80,tdHeight-dy*0.15)); } else if(dBtn===2){ const s=Math.sin(tdAngle),c=Math.cos(tdAngle); tdTgt.x-=(dx*c+dy*s)*0.08; tdTgt.z-=(-dx*s+dy*c)*0.08; }});
+window.addEventListener('mouseup',()=>{ drag=false; });
+renderer.domElement.addEventListener('contextmenu', e=>e.preventDefault());
+
+// FP controls
+const keys={};
+let yaw=Math.PI, pitch=-0.05;
+window.addEventListener('keydown', e=>{ keys[e.key.toLowerCase()]=true; });
+window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()]=false; });
+document.addEventListener('mousemove', e=>{
+  if(mode!=='immersive'||!document.pointerLockElement) return;
+  yaw-=e.movementX*0.0018;
+  pitch=Math.max(-1.3,Math.min(1.0,pitch-e.movementY*0.0018));
+});
+
+// View switch
+const btns=document.querySelectorAll('.vbtn');
+const hTd=document.getElementById('hint-td'), hFp=document.getElementById('hint-fp');
+btns.forEach(b=>b.addEventListener('click',()=>{
+  btns.forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  mode=b.dataset.view;
+  if(mode==='topdown'){ cam=tdCam; if(document.pointerLockElement) document.exitPointerLock(); hTd.style.display=''; hFp.style.display='none'; crosshair.classList.remove('show'); }
+  else { cam=fpCam; fpCam.position.set(0,2.5,0); yaw=Math.PI; pitch=-0.05; hTd.style.display='none'; hFp.style.display=''; crosshair.classList.add('show'); }
+  hideInfo();
+}));
+document.addEventListener('pointerlockchange',()=>{ if(mode==='immersive') crosshair.classList.toggle('show',!!document.pointerLockElement); });
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — lightweight animate loop
+// ═══════════════════════════════════════════════════════════════
+const clock = new THREE.Clock();
+// Pre-allocate reusable vectors
+const _tmpVec = new THREE.Vector3();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t = clock.getElapsedTime();
+
+  // Flow particles
+  const fp = flowGeo.attributes.position.array;
+  for(let i=0;i<flowN;i++){
+    const v=flowV[i];
+    v.a+=v.spd*(v.cw?1:-1);
+    fp[i*3]=Math.cos(v.a)*v.rOff;
+    fp[i*3+1]=v.yB+Math.sin(t*0.6+v.ph)*0.8;
+    fp[i*3+2]=Math.sin(v.a)*v.rOff;
+  }
+  flowGeo.attributes.position.needsUpdate=true;
+
+  // Node pulse — simple emissive oscillation, no distance checks in topdown
+  const pulse = 0.5 + Math.sin(t*1.6)*0.15;
+  if(mode==='immersive'){
+    for(const id in allND){
+      const n=allND[id];
+      const dist = fpCam.position.distanceTo(_tmpVec.set(n.pos.x, n.nY, n.pos.z));
+      const extra = dist < 15 ? (1 - dist/15) * 0.35 : 0;
+      n.sMat.emissiveIntensity = pulse + extra;
+      n.gl.material.opacity = 0.04 + extra * 0.05;
+    }
+  } else {
+    // Single value for all nodes in topdown — skip per-node loop most frames
+    if(Math.floor(t*4) !== Math.floor((t-dt)*4)) {
+      for(const id in allND){ allND[id].sMat.emissiveIntensity = pulse; }
+    }
+  }
+
+  // Camera
+  if(mode==='topdown'){
+    tdCam.position.set(tdTgt.x+Math.sin(tdAngle)*tdDist, tdHeight, tdTgt.z+Math.cos(tdAngle)*tdDist);
+    tdCam.lookAt(tdTgt);
+
+    raycaster.setFromCamera(mouse, cam);
+    const hits=raycaster.intersectObjects(clickables);
+    if(hits.length>0){
+      if(hovered!==hits[0].object){ if(hovered) hovered.scale.setScalar(1); hovered=hits[0].object; hovered.scale.setScalar(1.25); }
+      renderer.domElement.style.cursor='pointer';
+    } else {
+      if(hovered){ hovered.scale.setScalar(1); hovered=null; }
+      renderer.domElement.style.cursor='default';
+    }
+  } else {
+    const spd=14*dt;
+    const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+    const rt=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+    if(keys['w']) fpCam.position.addScaledVector(fwd,spd);
+    if(keys['s']) fpCam.position.addScaledVector(fwd,-spd);
+    if(keys['a']) fpCam.position.addScaledVector(rt,-spd);
+    if(keys['d']) fpCam.position.addScaledVector(rt,spd);
+    fpCam.position.y=2.5;
+
+    const ld=new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));
+    fpCam.lookAt(fpCam.position.clone().add(ld));
+
+    if(document.pointerLockElement){
+      raycaster.setFromCamera(new THREE.Vector2(0,0), fpCam);
+      const hits=raycaster.intersectObjects(clickables);
+      if(hits.length>0&&hits[0].distance<20){ const d=hits[0].object.userData.data; if(selected!==d){selected=d;showInfo(d);} }
+      else if(selected){ hideInfo(); }
+    }
+  }
+
+  renderer.render(scene, cam);
+}
+animate();
+
+window.addEventListener('resize',()=>{
+  const w=window.innerWidth,h=window.innerHeight;
+  renderer.setSize(w,h);
+  tdCam.aspect=w/h; tdCam.updateProjectionMatrix();
+  fpCam.aspect=w/h; fpCam.updateProjectionMatrix();
+});
+</script>
+</body>
+</html>

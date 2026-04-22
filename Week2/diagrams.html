@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meditative Research - Weighted Tubes</title>
+    <style>
+        body { margin: 0; background: #fff; overflow: hidden; }
+        #nav { position: fixed; top: 20px; width: 100%; text-align: center; color: #000; font-family: monospace; font-size: 10px; letter-spacing: 1px; opacity: 0.3; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div id="nav">1: CYCLE | 2: REFRACTION | 3: HORIZON | 4: LINK</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        let scene, camera, renderer, group;
+        let currentStage = 1;
+        const BOLD = 0.08;
+        const LIGHT = 0.015;
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.z = 20;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            group = new THREE.Group();
+            scene.add(group);
+
+            setupStage(1);
+
+            window.addEventListener('keydown', (e) => {
+                if (['1', '2', '3', '4'].includes(e.key)) {
+                    currentStage = parseInt(e.key);
+                    setupStage(currentStage);
+                }
+            });
+        }
+
+        // --- Geometric Helpers using Tubes for actual weight ---
+        function createTube(points, radius) {
+            const curve = new THREE.CatmullRomCurve3(points);
+            const geometry = new THREE.TubeGeometry(curve, 64, radius, 8, false);
+            const material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            return new THREE.Mesh(geometry, material);
+        }
+
+        function createRing(radius, tubeRadius) {
+            const geometry = new THREE.TorusGeometry(radius, tubeRadius, 16, 100);
+            const material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            return new THREE.Mesh(geometry, material);
+        }
+
+        function setupStage(stage) {
+            while(group.children.length > 0) group.remove(group.children[0]);
+
+            if (stage === 1) { // SMITH & DEAN
+                const inner = createRing(4, BOLD);
+                const outer = createRing(5.2, LIGHT);
+                group.add(inner, outer);
+            } 
+
+            else if (stage === 2) { // BORGDORFF
+                // Bold Prism
+                const p1 = new THREE.Vector3(0, 3, 0), p2 = new THREE.Vector3(-3.5, -2, 0), p3 = new THREE.Vector3(3.5, -2, 0);
+                group.add(createTube([p1, p2], BOLD));
+                group.add(createTube([p2, p3], BOLD));
+                group.add(createTube([p3, p1], BOLD));
+                
+                // Thin Rays
+                group.add(createTube([new THREE.Vector3(-10, 0, 0), new THREE.Vector3(-1, 0, 0)], LIGHT));
+                group.add(createTube([new THREE.Vector3(1, 0, 0), new THREE.Vector3(10, 2.5, 0)], LIGHT));
+                group.add(createTube([new THREE.Vector3(1, 0, 0), new THREE.Vector3(10, 0, 0)], LIGHT));
+                group.add(createTube([new THREE.Vector3(1, 0, 0), new THREE.Vector3(10, -2.5, 0)], LIGHT));
+            }
+
+            else if (stage === 3) { // CANDY
+                // Thick Horizon
+                group.add(createTube([new THREE.Vector3(-12, 0, 0), new THREE.Vector3(12, 0, 0)], BOLD));
+                
+                // Submerged Box (Bold - Practice Based)
+                const box1 = new THREE.Group();
+                const bSize = 2.5;
+                const mat = new THREE.MeshBasicMaterial({color:0x000000});
+                const boxGeom = new THREE.BoxGeometry(bSize, bSize, bSize);
+                const edges = new THREE.EdgesGeometry(boxGeom);
+                // Creating thick edges manually
+                const pos = edges.attributes.position;
+                for(let i=0; i<pos.count; i+=2) {
+                    const pStart = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
+                    const pEnd = new THREE.Vector3(pos.getX(i+1), pos.getY(i+1), pos.getZ(i+1));
+                    box1.add(createTube([pStart, pEnd], BOLD));
+                }
+                box1.position.set(-4.5, -1.2, 0);
+
+                // Floated Box (Light - Practice Led)
+                const box2 = new THREE.Group();
+                for(let i=0; i<pos.count; i+=2) {
+                    const pStart = new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
+                    const pEnd = new THREE.Vector3(pos.getX(i+1), pos.getY(i+1), pos.getZ(i+1));
+                    box2.add(createTube([pStart, pEnd], LIGHT));
+                }
+                box2.position.set(4.5, 1.2, 0);
+                
+                group.add(box1, box2);
+            }
+
+            else if (stage === 4) { // THE LINK
+                // Bold Pillars (Cliffs)
+                const pillar1 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 8, 0.8), new THREE.MeshBasicMaterial({color:0x000000}));
+                pillar1.position.set(-7, -2, 0);
+                const pillar2 = pillar1.clone();
+                pillar2.position.set(7, -2, 0);
+                
+                // Thin Bridge
+                const bridge = createTube([new THREE.Vector3(-7, 2, 0), new THREE.Vector3(7, 2, 0)], LIGHT);
+                
+                // Focal Point
+                const dot = new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 32), new THREE.MeshBasicMaterial({color: 0x000000}));
+                dot.position.y = 2.3;
+                dot.userData.phase = 0;
+                
+                group.add(pillar1, pillar2, bridge, dot);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (currentStage === 1) {
+                group.children[0].rotation.z += 0.01;
+                group.children[1].rotation.z -= 0.005;
+            }
+            if (currentStage === 4 && group.children[3]) {
+                const dot = group.children[3];
+                dot.userData.phase += 0.015;
+                dot.position.x = Math.sin(dot.userData.phase) * 6.8;
+            }
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

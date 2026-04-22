@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MSc Creative Computing — Lecture 1 — Practice as Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #000;
+    --paper: #fff;
+    --rule: #000;
+    --muted: #555;
+    --hover: #000;
+    --serif: 'EB Garamond', Georgia, 'Times New Roman', serif;
+    --mono: 'JetBrains Mono', 'SF Mono', Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 18px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- Layout: one slide per viewport-height, scroll to navigate ---- */
+  .deck {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  .slide {
+    min-height: 100vh;
+    padding: 64px 56px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .slide:first-of-type { border-top: none; }
+
+  /* slide chrome */
+  .slide-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .slide-meta .num::before { content: ""; }
+
+  /* typography */
+  h1, h2, h3, h4 {
+    font-family: var(--serif);
+    font-weight: 500;
+    margin: 0 0 0.5em 0;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+  h1 { font-size: 56px; font-weight: 600; }
+  h2 { font-size: 38px; }
+  h3 { font-size: 24px; font-weight: 600; margin-top: 1.4em; }
+  h4 { font-size: 18px; text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--mono); font-weight: 500; }
+
+  p { margin: 0 0 1em 0; max-width: 70ch; }
+  .lede { font-size: 24px; line-height: 1.35; max-width: 28ch; }
+  .big   { font-size: 32px; line-height: 1.25; max-width: 22ch; font-weight: 500; }
+
+  ol, ul { margin: 0 0 1em 0; padding-left: 1.4em; max-width: 70ch; }
+  li { margin-bottom: 0.5em; }
+
+  em { font-style: italic; }
+  strong { font-weight: 600; }
+
+  a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--ink);
+    transition: background 120ms;
+  }
+  a:hover { background: var(--ink); color: var(--paper); }
+
+  blockquote {
+    font-style: italic;
+    margin: 1.2em 0;
+    padding-left: 1.2em;
+    border-left: 2px solid var(--ink);
+    max-width: 60ch;
+  }
+
+  /* speaker notes */
+  .notes {
+    margin-top: auto;
+    padding: 18px 22px;
+    border: 1px dashed var(--ink);
+    background: var(--paper);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink);
+    max-width: none;
+  }
+  .notes::before {
+    content: "Speaker note";
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    color: var(--muted);
+  }
+  .notes p { margin-bottom: 0.6em; max-width: none; }
+  .notes p:last-child { margin-bottom: 0; }
+
+  /* tables */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    max-width: 70ch;
+    margin: 1em 0;
+    font-size: 17px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px 10px 0;
+    border-bottom: 1px solid var(--ink);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  /* title slide */
+  .title-slide {
+    justify-content: center;
+  }
+  .title-slide h1 {
+    font-size: 88px;
+    line-height: 0.95;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.4em;
+  }
+  .title-slide .subtitle {
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2em;
+  }
+  .title-slide .author {
+    margin-top: 4em;
+    font-style: italic;
+    font-size: 18px;
+  }
+
+  /* takeaways slide */
+  .takeaways ol {
+    counter-reset: tk;
+    list-style: none;
+    padding: 0;
+  }
+  .takeaways li {
+    counter-increment: tk;
+    padding: 18px 0 18px 0;
+    border-top: 1px solid var(--ink);
+    position: relative;
+    padding-left: 56px;
+    font-size: 19px;
+  }
+  .takeaways li:last-child { border-bottom: 1px solid var(--ink); }
+  .takeaways li::before {
+    content: counter(tk, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  /* nav controls */
+  .toc {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    z-index: 1000;
+    user-select: none;
+  }
+  .toc summary {
+    cursor: pointer;
+    list-style: none;
+    outline: none;
+  }
+  .toc summary::-webkit-details-marker { display: none; }
+  .toc[open] summary { margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); }
+  .toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+    min-width: 240px;
+  }
+  .toc li { margin-bottom: 4px; }
+  .toc a {
+    border: none;
+    text-decoration: none;
+    display: block;
+    padding: 3px 0;
+  }
+  .toc a:hover { background: var(--ink); color: var(--paper); padding-left: 6px; }
+
+  /* print: clean, one slide per page, no notes-as-modal */
+  @media print {
+    body { font-size: 14px; }
+    .toc { display: none; }
+    .slide {
+      min-height: auto;
+      height: auto;
+      padding: 32px 32px 24px;
+      page-break-after: always;
+      border-bottom: none;
+    }
+    .notes { font-size: 11px; }
+    h1 { font-size: 40px; }
+    h2 { font-size: 26px; }
+    .title-slide h1 { font-size: 56px; }
+  }
+
+  @media (max-width: 720px) {
+    .slide { padding: 36px 24px 56px; }
+    h1 { font-size: 36px; }
+    h2 { font-size: 26px; }
+    .title-slide h1 { font-size: 44px; }
+    .toc { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<details class="toc">
+  <summary>Slides ▾</summary>
+  <ol>
+    <li><a href="#s1">01 — Title</a></li>
+    <li><a href="#s2">02 — Why this course exists</a></li>
+    <li><a href="#s3">03 — Two routes</a></li>
+    <li><a href="#s4">04 — Assessment logic</a></li>
+    <li><a href="#s5">05 — The 8-week arc</a></li>
+    <li><a href="#s6">06 — Three habits</a></li>
+    <li><a href="#s7">07 — Today's session</a></li>
+    <li><a href="#s8">08 — Working definition</a></li>
+    <li><a href="#s9">09 — The edge</a></li>
+    <li><a href="#s10">10 — Project / theme / question</a></li>
+    <li><a href="#s11">11 — Hypothesis</a></li>
+    <li><a href="#s12">12 — The test</a></li>
+    <li><a href="#s13">13 — What is the point?</a></li>
+    <li><a href="#s14">14 — Why it matters</a></li>
+    <li><a href="#s15">15 — Who cares?</a></li>
+    <li><a href="#s16">16 — Some examples</a></li>
+    <li><a href="#s17">17 — Why those four</a></li>
+    <li><a href="#s18">18 — Marclay, The Clock</a></li>
+    <li><a href="#s19">19 — Sigur Rós, Route One</a></li>
+    <li><a href="#s20">20 — MAGNet</a></li>
+    <li><a href="#s21">21 — Adam Cole, Kiss/Crash</a></li>
+    <li><a href="#s22">22 — Active Divergence</a></li>
+    <li><a href="#s23">23 — Where there is consensus</a></li>
+    <li><a href="#s24">24 — Where there is not</a></li>
+    <li><a href="#s25">25 — Working process</a></li>
+    <li><a href="#s26">26 — Failure modes</a></li>
+    <li><a href="#s27">27 — Takeaways</a></li>
+    <li><a href="#s28">28 — For next week</a></li>
+    <li><a href="#s29">29 — Tutorials & contact</a></li>
+    <li><a href="#s30">30 — Questions</a></li>
+  </ol>
+</details>
+
+<main class="deck">
+
+<!-- 01 -->
+<section class="slide title-slide" id="s1">
+  <div class="slide-meta">
+    <span class="num">01 / 30</span>
+    <span>MSc Creative Computing — Lecture 1</span>
+  </div>
+  <h1>Practice<br>as Research</h1>
+  <div class="subtitle">Lecture 1 of 8 — Course introduction &amp; "What is research?"</div>
+  <div class="author">Mick Grierson — <a href="https://www.arts.ac.uk/colleges/creative-computing-institute">Creative Computing Institute</a>, UAL</div>
+  <div class="notes">
+    <p>Set the tone — this is a course about <em>how to think and work</em>, not a tools course. The goal across 8 weeks is to give you a process you can keep using long after this module ends.</p>
+  </div>
+</section>
+
+<!-- 02 -->
+<section class="slide" id="s2">
+  <div class="slide-meta"><span class="num">02 / 30</span><span>Why this course exists</span></div>
+  <h2>Why this course exists</h2>
+  <p class="lede">You already know how to make things. This course is about making things that <strong>mean something to a wider conversation.</strong></p>
+  <h4>Three claims we keep returning to</h4>
+  <ol>
+    <li><strong>Finding a voice</strong> — a unique approach others can read in multiple ways.</li>
+    <li><strong>Finding a problem</strong> — locating a real gap in current understanding.</li>
+    <li><strong>The almost-perfect situation</strong> — a gap that <em>also</em> lets you develop a voice.</li>
+  </ol>
+  <div class="notes">
+    <p>Read these slowly. Tell them: most students spend the term oscillating between (1) and (2). The A-grade work happens when (3) clicks. We'll talk about how to engineer that, not wait for inspiration.</p>
+  </div>
+</section>
+
+<!-- 03 -->
+<section class="slide" id="s3">
+  <div class="slide-meta"><span class="num">03 / 30</span><span>Two routes to the same place</span></div>
+  <h2>Two routes to the same place</h2>
+  <h3>If you come from artistic practice</h3>
+  <p>The work is about finding a voice — an approach, a sensibility, a way of asking questions through making.</p>
+  <h3>If you come from a technical background</h3>
+  <p>The work is about combining technologies, developing a new use of a technology, or co-opting one in an unexpected way.</p>
+  <p class="big">The strongest projects do both.</p>
+  <div class="notes">
+    <p>Be explicit — neither route is superior. Technical students sometimes assume "art" means "decorative". Artists sometimes assume "technical" means "instrumental". Both wrong. We'll see examples this lecture where the two are inseparable.</p>
+  </div>
+</section>
+
+<!-- 04 -->
+<section class="slide" id="s4">
+  <div class="slide-meta"><span class="num">04 / 30</span><span>What you will be assessed on</span></div>
+  <h2>What you will be assessed on (in broad terms)</h2>
+  <p>I'm team-teaching, so others will set specifics. But across the field, the grading logic tends to be:</p>
+  <ul>
+    <li><strong>C / B band:</strong> a project that draws inspiration from specific works, with clear attribution and competent execution.</li>
+    <li><strong>A band:</strong> a project that <em>builds on</em> existing work to produce a notably new or unique outcome.</li>
+  </ul>
+  <p class="big">Citation is the floor. Contribution is the ceiling.</p>
+  <div class="notes">
+    <p>Don't dwell on grading politics. The point is that the same intellectual move — situating your work against existing work — is what separates a competent project from a distinctive one. We'll spend Lecture 3 on exactly this.</p>
+  </div>
+</section>
+
+<!-- 05 -->
+<section class="slide" id="s5">
+  <div class="slide-meta"><span class="num">05 / 30</span><span>The 8-week arc</span></div>
+  <h2>The 8-week arc</h2>
+  <table>
+    <thead><tr><th>Week</th><th>Focus</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>What is research? Why does it matter? Who is it for?</td></tr>
+      <tr><td>2</td><td>How practice produces knowledge (Smith &amp; Dean)</td></tr>
+      <tr><td>3</td><td>Situating research in a field — finding the GAP</td></tr>
+      <tr><td>4</td><td>Choosing and designing methods</td></tr>
+      <tr><td>5</td><td>Reflection as research insight — annotated documentation</td></tr>
+      <tr><td>6</td><td>What to document and why</td></tr>
+      <tr><td>7</td><td>Exhibition vs research output — complementary, not opposed</td></tr>
+      <tr><td>8</td><td>Critical framing — refining your argument</td></tr>
+    </tbody>
+  </table>
+  <div class="notes">
+    <p>Weeks 1–3 are about <em>positioning</em> (what are you doing and why does it matter), weeks 4–6 are about <em>doing it well</em> (method, reflection, documentation), weeks 7–8 are about <em>making it land</em> (where it goes, how you frame it). Sequential for a reason.</p>
+  </div>
+</section>
+
+<!-- 06 -->
+<section class="slide" id="s6">
+  <div class="slide-meta"><span class="num">06 / 30</span><span>How to get the most out of this module</span></div>
+  <h2>Three habits, starting today</h2>
+  <ol>
+    <li><strong>Keep a working notebook.</strong> Anything — text, sketches, links, code, voice notes. Date everything.</li>
+    <li><strong>Read one thing a week you wouldn't normally read.</strong> Outside your discipline.</li>
+    <li><strong>Make something small every week.</strong> A test, a sketch, a probe. Not a finished piece.</li>
+  </ol>
+  <p class="big">The students who do these three things produce the best work. Every year. Without exception.</p>
+  <div class="notes">
+    <p>This is the single most important slide for getting good work out of them. Be emphatic. The notebook habit becomes the documentation in week 6. The reading habit becomes the contextualisation in week 3. The weekly making becomes the methods in week 4.</p>
+  </div>
+</section>
+
+<!-- 07 -->
+<section class="slide" id="s7">
+  <div class="slide-meta"><span class="num">07 / 30</span><span>Today's session</span></div>
+  <h2>Today's session</h2>
+  <h4>Three questions</h4>
+  <ol>
+    <li><strong>What is research?</strong> (the edge, the hypothesis, the test)</li>
+    <li><strong>What is the point of research?</strong> (new knowledge — and is knowledge fixed?)</li>
+    <li><strong>Who cares?</strong> (who is research for, who benefits)</li>
+  </ol>
+  <p>Then: <strong>examples</strong> — what does this look like in technology arts?</p>
+  <div class="notes">
+    <p>Lay out the structure so they can follow. Tell them we'll use real examples throughout, not abstractions.</p>
+  </div>
+</section>
+
+<!-- 08 -->
+<section class="slide" id="s8">
+  <div class="slide-meta"><span class="num">08 / 30</span><span>What is research?</span></div>
+  <h2>What is research? (a working definition)</h2>
+  <p class="lede">Research is a structured attempt to produce something that wasn't known before, in a form others can examine, test, or build on.</p>
+  <h4>Three components</h4>
+  <ul>
+    <li><strong>The edge</strong> — where the known runs out.</li>
+    <li><strong>The hypothesis</strong> — your bet about what's beyond it.</li>
+    <li><strong>The test</strong> — what you'll do to find out, and how others will judge it.</li>
+  </ul>
+  <div class="notes">
+    <p>This definition deliberately avoids the "scientific method" framing. The edge / hypothesis / test triad works for a lab experiment, a software prototype, an installation, or a film. General enough to cover practice-based work without being so loose it means nothing.</p>
+  </div>
+</section>
+
+<!-- 09 -->
+<section class="slide" id="s9">
+  <div class="slide-meta"><span class="num">09 / 30</span><span>The edge</span></div>
+  <h2>"The edge"</h2>
+  <p>The edge is <strong>what is not yet understood</strong>, or <strong>what is understood but unexplored</strong>, or <strong>what is assumed but not tested.</strong></p>
+  <h4>Locating the edge requires</h4>
+  <ul>
+    <li>knowing what is already done <em>(Lecture 3)</em></li>
+    <li>knowing who is doing it now <em>(Lecture 3)</em></li>
+    <li>knowing what <em>they</em> think is unresolved <em>(Lecture 3)</em></li>
+  </ul>
+  <p class="big">You cannot find an edge from inside your own head.</p>
+  <div class="notes">
+    <p>This is the move that distinguishes a "project" from "research". A project says "I want to make X." Research says "I want to make X <em>because the field needs Y, and X is my bet on what Y looks like.</em>" Both are valid. Only one is research.</p>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" id="s10">
+  <div class="slide-meta"><span class="num">10 / 30</span><span>Project · Theme · Question</span></div>
+  <h2>Project vs Theme vs Research Question</h2>
+  <table>
+    <thead><tr><th></th><th>What it is</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Project</strong></td>
+        <td>A thing you intend to make</td>
+        <td>"I'll build a generative audio installation"</td>
+      </tr>
+      <tr>
+        <td><strong>Theme</strong></td>
+        <td>A territory you're interested in</td>
+        <td>"Memory, sound, and place"</td>
+      </tr>
+      <tr>
+        <td><strong>Research question</strong></td>
+        <td>A specific, answerable interrogation of the territory</td>
+        <td>"Can a generative audio system trained on a specific location's recordings produce material that listeners associate with that place?"</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>Most students arrive with a project. The work of this module is to get you to a research question.</p>
+  <div class="notes">
+    <p>Worth dwelling on. Ask the room: who has a project in mind? Now: what's the theme behind it? Now: what's the question? You'll get blank looks for the third column. That's the gap this module fills.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide" id="s11">
+  <div class="slide-meta"><span class="num">11 / 30</span><span>Hypothesis</span></div>
+  <h2>Hypothesis, in practice-based work</h2>
+  <p>A hypothesis doesn't have to be a falsifiable scientific claim. In practice-based research it is more often:</p>
+  <ul>
+    <li><strong>A wager</strong> — "I think if I do <em>this</em>, <em>that</em> will happen, and it will be interesting because…"</li>
+    <li><strong>A position</strong> — "I claim that current approaches miss <em>this</em>, and my work demonstrates an alternative."</li>
+    <li><strong>A probe</strong> — "I don't yet know what happens if <em>this</em>, and finding out is itself the contribution."</li>
+  </ul>
+  <p>All three are legitimate. They map onto <strong>experiment, prototype, and probe</strong> — which we'll cover next week.</p>
+  <div class="notes">
+    <p>Take the pressure off the word "hypothesis". For artists this word is alien. Translate it: it's just being explicit about what you think will happen and why anyone should care.</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide" id="s12">
+  <div class="slide-meta"><span class="num">12 / 30</span><span>The test</span></div>
+  <h2>The test</h2>
+  <p>What counts as a "test" in practice-based research?</p>
+  <ul>
+    <li><strong>Public exhibition</strong> — does the work read as you intended? What do audiences do with it?</li>
+    <li><strong>Peer review</strong> — does the field accept the framing, the method, the contribution?</li>
+    <li><strong>Critical writing</strong> — can you articulate what you did, why, and what it shows?</li>
+    <li><strong>Replication / extension</strong> — can someone else build on it?</li>
+  </ul>
+  <p class="big">A piece of work that no-one but you can interrogate is not yet research.</p>
+  <p>It might still be art. It might still be valuable. But it is not research.</p>
+  <div class="notes">
+    <p>This is the bit where some artists push back. Be ready. The point is not "research is better than art". The point is "if you want it to count as research, it has to be open to scrutiny by others." Plenty of brilliant art is not research and doesn't need to be.</p>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide" id="s13">
+  <div class="slide-meta"><span class="num">13 / 30</span><span>What is the point?</span></div>
+  <h2>What is the point of research?</h2>
+  <p class="big">To produce <strong>new knowledge.</strong></p>
+  <p>But — is knowledge a fixed thing?</p>
+  <ul>
+    <li>Knowledge as <strong>propositional</strong> ("X is true")</li>
+    <li>Knowledge as <strong>procedural</strong> ("here is how to do X")</li>
+    <li>Knowledge as <strong>tacit</strong> ("I know how to do X but cannot fully say how")</li>
+    <li>Knowledge as <strong>situated</strong> ("X is true <em>here, for these people, in this context</em>")</li>
+  </ul>
+  <p>Practice-based research mostly produces the <strong>procedural, tacit, and situated</strong> kinds. This is not a deficiency — it's the point.</p>
+  <div class="notes">
+    <p>This slide pre-empts a lot of confusion. Students from STEM backgrounds default to propositional knowledge as "real" knowledge. They need to understand that knowing <em>how</em> to do something — and being able to show others — is a contribution. Smith and Dean, week 2, will give them a vocabulary for this.</p>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="slide" id="s14">
+  <div class="slide-meta"><span class="num">14 / 30</span><span>Why it matters</span></div>
+  <h2>Why does it matter?</h2>
+  <p>Research in technology arts has, in the last 25 years:</p>
+  <ul>
+    <li>Shaped how we think about machine learning's creative potential — <em>before</em> the current AI moment.</li>
+    <li>Built tools that millions of artists now use (<a href="http://www.wekinator.org/">Wekinator</a>, <a href="https://magenta.tensorflow.org/">Magenta</a>, RunwayML, Stable Diffusion's UI ecosystems).</li>
+    <li>Forced legal, ethical, and aesthetic questions onto policy agendas (copyright, training data, authorship).</li>
+    <li>Produced cultural artefacts that change how people understand the technology itself.</li>
+  </ul>
+  <p class="big">If artists weren't doing this work, someone else would be defining what these technologies are for.</p>
+  <div class="notes">
+    <p>This is where I tell them about my recent intervention at the Tony Blair Institute "Rebooting Copyright" launch in 2025 — challenging Microsoft Legal on model memorisation, with DSIT in the room. That's a direct line from practice-based research to policy. Their work might do the same.</p>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="slide" id="s15">
+  <div class="slide-meta"><span class="num">15 / 30</span><span>Who cares?</span></div>
+  <h2>Who cares? Who is it for?</h2>
+  <p>Research has multiple audiences. Be honest about which one(s) you're addressing:</p>
+  <ul>
+    <li><strong>Other practitioners</strong> — they want methods, tools, and demonstrations they can build on.</li>
+    <li><strong>Academic peers</strong> — they want a clear contribution to a literature.</li>
+    <li><strong>Audiences / publics</strong> — they want experiences that move, provoke, or illuminate.</li>
+    <li><strong>Industry / policy</strong> — they want frameworks, evidence, and arguments.</li>
+    <li><strong>Future you</strong> — they want documentation good enough to build on in 2 years.</li>
+  </ul>
+  <p>Most strong projects address 2–3 of these <em>deliberately</em>. Weak projects address none of them and hope for the best.</p>
+  <div class="notes">
+    <p>Push them to name the audience early. "Who is this for?" is the question that most clarifies muddled projects. "Everyone" is not an answer.</p>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="slide" id="s16">
+  <div class="slide-meta"><span class="num">16 / 30</span><span>Some examples</span></div>
+  <h2>Some broad examples of art-tech research</h2>
+  <p>A small, partial set of examples — there are significant gaps in this list. None of this is required reading today, but it gestures at the soil this course grows from.</p>
+  <ul>
+    <li><strong><a href="https://www.tate.org.uk/art/artists/roy-ascott-17818">Roy Ascott</a></strong> — telematic art (1980s). Networks as artistic medium <em>before</em> the web. <a href="https://www.fondation-langlois.org/html/e/page.php?NumPage=137"><em>La Plissure du Texte</em></a> (1983) explored distributed authorship across continents.</li>
+    <li><strong><a href="https://www.tate.org.uk/art/artists/nam-june-paik-6380">Nam June Paik</a></strong> — video synthesisers, <em>TV Buddha</em>, <em>Magnet TV</em> (1960s–70s). Co-opting consumer technology to expose its assumptions.</li>
+    <li><strong><a href="https://cardiffmiller.com/">Janet Cardiff &amp; George Bures Miller</a></strong> — audio walks, immersive sound installations. Research into perception, place, and narrative through built experience.</li>
+    <li><strong><a href="https://www.lozano-hemmer.com/">Rafael Lozano-Hemmer</a></strong> — <a href="https://www.lozano-hemmer.com/pulse_room.php"><em>Pulse Room</em></a>, <em>Vectorial Elevation</em>. Public-scale interactive systems. Research into participation and crowd phenomena.</li>
+  </ul>
+  <div class="notes">
+    <p>Pick one or two to dwell on depending on the room. Ascott is good because most students haven't heard of him and the work pre-dates the conditions it predicted. Paik is good for the "co-opting technology" point — directly relevant to the technical-route students.</p>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="slide" id="s17">
+  <div class="slide-meta"><span class="num">17 / 30</span><span>Why those four</span></div>
+  <h2>Why those four?</h2>
+  <p>Each of them did one specific thing this course is asking <em>you</em> to do:</p>
+  <ul>
+    <li><strong>Ascott</strong> — situated his practice in a <em>theoretical</em> conversation (cybernetics, systems theory) and produced work that advanced both the theory and the art.</li>
+    <li><strong>Paik</strong> — took a mass-market technology and used it against its own grain. The work <em>is</em> the argument.</li>
+    <li><strong>Cardiff &amp; Miller</strong> — built rigorous methods around an experiential medium that resists rigour.</li>
+    <li><strong>Lozano-Hemmer</strong> — made the engineering visible as part of the meaning, not hidden behind the spectacle.</li>
+  </ul>
+  <div class="notes">
+    <p>This is the slide that connects the historical examples back to the assessment criteria. Each of these artists would score an A on this module, and you can show <em>why</em>.</p>
+  </div>
+</section>
+
+<!-- 18 -->
+<section class="slide" id="s18">
+  <div class="slide-meta"><span class="num">18 / 30</span><span>Marclay — The Clock</span></div>
+  <h2>Closer to home: <a href="https://www.tate.org.uk/whats-on/tate-modern/christian-marclay-clock">Christian Marclay's <em>The Clock</em></a></h2>
+  <p>24-hour single-channel video, 2010. A working clock made entirely of film clips showing the corresponding time. Winner of the <a href="https://www.moma.org/calendar/exhibitions/5746">Golden Lion at the 2011 Venice Biennale</a>.</p>
+  <ul>
+    <li><strong>The edge:</strong> can found footage be reorganised so that the artwork <em>is</em> a functional object?</li>
+    <li><strong>The method:</strong> an enormous, carefully indexed database; bespoke software for synchronisation and playback; rigorous editorial decisions.</li>
+    <li><strong>The contribution:</strong> a new compositional logic for moving image — and a working argument about cinema, time, and labour.</li>
+  </ul>
+  <p>I designed and built the playback software for the first version of <em>The Clock</em>. The technical work is part of the artwork, not a service to it.</p>
+  <div class="notes">
+    <p>Use this to make the point about technical work as research. The software wasn't generic — it had to do something nobody had needed software to do before. That's where the technical contribution sits. Mention casually; don't oversell.</p>
+  </div>
+</section>
+
+<!-- 19 -->
+<section class="slide" id="s19">
+  <div class="slide-meta"><span class="num">19 / 30</span><span>Sigur Rós — Route One</span></div>
+  <h2>Closer to home: <a href="https://sigurros.com/film/route-one/">Sigur Rós, <em>Route One</em></a> (2016)</h2>
+  <p>A 24-hour generative live broadcast: a slow drive around Iceland's Route 1, with the band's music continuously regenerated by software in real time so that no two minutes are the same.</p>
+  <ul>
+    <li><strong>The edge:</strong> can a piece of recorded music be re-imagined as a live, infinite, generative system — broadcast to a public audience?</li>
+    <li><strong>The method:</strong> custom generative audio software (which I wrote), long-form camera work, public broadcast infrastructure.</li>
+    <li><strong>The contribution:</strong> a working demonstration that "the album" and "the live performance" aren't the only formats music can take.</li>
+  </ul>
+  <div class="notes">
+    <p>Tie this back to slide 3 — technical-route students often think generative systems are the <em>output</em>. Here, the generative system is the <em>medium</em>, and the artistic argument is about format, duration, and what counts as a "release". The technology is co-opted, not just deployed.</p>
+  </div>
+</section>
+
+<!-- 20 -->
+<section class="slide" id="s20">
+  <div class="slide-meta"><span class="num">20 / 30</span><span>MAGNet</span></div>
+  <h2>From my own practice: MAGNet (2016)</h2>
+  <p>Neural audio synthesis at CD quality, using LSTMs over STFT frames. Among the first deep learning systems to generate raw audio with musical structure.</p>
+  <ul>
+    <li><strong>The edge (then):</strong> generative audio was either symbolic (MIDI) or low-fidelity. Could deep learning produce <em>listenable</em> musical material?</li>
+    <li><strong>The method:</strong> training neural networks on spectral representations; iterative listening tests; collaboration with composers (Robert Del Naja).</li>
+    <li><strong>The contribution:</strong> a working architecture, public demonstrations (<a href="https://www.barbican.org.uk/whats-on/2019/event/ai-more-than-human">Barbican <em>AI: More Than Human</em></a>, 2019), and a body of subsequent work — including the <a href="https://arxiv.org/abs/2107.05599"><em>Network Bending</em> lineage</a> which gave artists a vocabulary for <em>intervening inside</em> generative models.</li>
+  </ul>
+  <p>Related: <a href="https://www.memo.tv/works/learning-to-see/">Memo Akten's <em>Learning to See</em></a> (2017, with Fiebrink &amp; Grierson) and <a href="https://terencebroad.com/works/blade-runner-autoencoded">Terence Broad's <em>Blade Runner—Autoencoded</em></a> (2016) sit in the same lineage.</p>
+  <div class="notes">
+    <p>Be honest about scale. MAGNet was small and weird. It mattered because it opened a door. Most of your projects will be similar — small, weird, opening a door. That's enough.</p>
+  </div>
+</section>
+
+<!-- 21 -->
+<section class="slide" id="s21">
+  <div class="slide-meta"><span class="num">21 / 30</span><span>Adam Cole — Kiss/Crash</span></div>
+  <h2>From a recent CCI student: <a href="https://kiss-crash.com/">Adam Cole, <em>Kiss/Crash</em></a></h2>
+  <p>Adam Cole's MSc work — a deeply researched immersive triptych engaging with how generative image models depict intimacy and violence, and what that says about their training distributions. Shortlisted for the <a href="https://lumenprize.com/">Lumen Prize</a>; <a href="https://www.arts.ac.uk/about-ual/press-office/stories/kisscrash-ccis-adam-cole-to-exhibit-latest-ai-artwork-at-sxsw">XR Audience Award winner at SXSW 2024</a>.</p>
+  <ul>
+    <li><strong>The edge:</strong> what do these models <em>avoid</em>, <em>conflate</em>, or <em>hallucinate</em> when asked about contact between bodies?</li>
+    <li><strong>The method:</strong> systematic prompting, comparative analysis, careful framing of presentation — written up as a <a href="https://blog.siggraph.org/2023/11/kiss-crash-how-ai-portrays-human-desire.html/">SIGGRAPH 2023 Art Paper</a>.</li>
+    <li><strong>The contribution:</strong> simultaneously an artwork and a critical investigation of the model's latent geometry.</li>
+  </ul>
+  <p class="big">This is what an A-grade outcome looks like: voice + gap, executed.</p>
+  <div class="notes">
+    <p>Use Adam as the proof point that this is achievable on this course, by people in the room's position 12 months ago. Don't oversell — show the work and let them respond.</p>
+  </div>
+</section>
+
+<!-- 22 -->
+<section class="slide" id="s22">
+  <div class="slide-meta"><span class="num">22 / 30</span><span>One paper, a whole map</span></div>
+  <h2>A research lineage from one paper</h2>
+  <p>Broad, Berns, Colton, Grierson (2021), <a href="https://arxiv.org/abs/2107.05599"><em>Active Divergence with Generative Deep Learning</em></a> (ICCC'21).</p>
+  <p>The paper surveys techniques that <strong>deliberately push generative models away from their training distribution.</strong> It cites:</p>
+  <ul>
+    <li><a href="https://terencebroad.com/works/teratome"><em>Teratome</em></a> (Broad, 2020) — network bending as artistic method.</li>
+    <li><em>You Are Here</em> (Schultz, 2020) — chained models, custom GANs, super-resolution.</li>
+    <li><a href="https://www.justinpinkney.com/blog/2020/stylegan-network-blending/">Network blending</a> (Pinkney &amp; Adler, 2020) — combining models trained on different data.</li>
+    <li><a href="https://arxiv.org/abs/2005.12420"><em>Network Bending</em></a> (Broad, Leymarie, Grierson, 2021) — the underlying technique paper.</li>
+  </ul>
+  <p class="big">One good survey paper is worth a hundred Twitter threads.</p>
+  <div class="notes">
+    <p>Land the practical lesson hard. Survey papers are how you get oriented in a field fast. Lecture 3 will go deeper on this. For now: when you find a survey paper that maps your area, read it carefully and follow its citations.</p>
+  </div>
+</section>
+
+<!-- 23 -->
+<section class="slide" id="s23">
+  <div class="slide-meta"><span class="num">23 / 30</span><span>What people agree is worthwhile</span></div>
+  <h2>What approaches do people agree are worthwhile?</h2>
+  <p>There is genuine consensus in the field on a few things:</p>
+  <ul>
+    <li><strong>Reproducibility-where-possible.</strong> Code, data, documentation that lets others extend your work.</li>
+    <li><strong>Honest negative results.</strong> "I tried X, it didn't work, here's what I learned" is publishable.</li>
+    <li><strong>Open methods.</strong> The how matters as much as the what.</li>
+    <li><strong>Critical reflexivity.</strong> What assumptions did you bring? What did the work surface that you didn't expect?</li>
+    <li><strong>Ethical seriousness.</strong> Especially around training data, labour, consent, and representation.</li>
+  </ul>
+  <p>These are also the criteria that get work into the venues that matter — <a href="https://neuripscreativityworkshop.github.io/">NeurIPS Creativity workshops</a>, <a href="https://isea-international.org/">ISEA</a>, <a href="https://ars.electronica.art/">Ars Electronica</a>, <a href="https://direct.mit.edu/leon">Leonardo</a>.</p>
+  <div class="notes">
+    <p>Frame these as "the things a strong examiner / reviewer / curator will look for". They are not optional extras; they are the load-bearing structure of how the field judges work.</p>
+  </div>
+</section>
+
+<!-- 24 -->
+<section class="slide" id="s24">
+  <div class="slide-meta"><span class="num">24 / 30</span><span>Where there is no consensus</span></div>
+  <h2>Where there is <em>not</em> consensus</h2>
+  <p>Be aware these are contested:</p>
+  <ul>
+    <li>What "originality" means in an era of large pre-trained models.</li>
+    <li>Whether AI-generated work can be authored, and by whom.</li>
+    <li>Whether scale (compute, data) is itself a form of contribution.</li>
+    <li>The relative weight of artefact vs documentation vs argument.</li>
+    <li>Who counts as "the field" — academia, industry, festival circuits, online communities.</li>
+  </ul>
+  <p>You don't need to resolve these. You do need to know they exist, and to position your work knowingly within them.</p>
+  <div class="notes">
+    <p>This is where the critical-framing skills (Lecture 8) start. Awareness now; refinement later. Mention that I challenged Microsoft Legal on memorisation precisely because these questions are unresolved and somebody had to put a position on the table.</p>
+  </div>
+</section>
+
+<!-- 25 -->
+<section class="slide" id="s25">
+  <div class="slide-meta"><span class="num">25 / 30</span><span>A working process</span></div>
+  <h2>A simple working process (for the rest of the term)</h2>
+  <p>Every week, for your own project:</p>
+  <ol>
+    <li><strong>One thing read</strong> — an article, paper, or work, with a paragraph of notes on what it does and what it leaves open.</li>
+    <li><strong>One thing made</strong> — a sketch, prototype, test, or fragment.</li>
+    <li><strong>One question refined</strong> — the research question you came in with, rewritten in light of (1) and (2).</li>
+  </ol>
+  <p>Bring all three to your tutorials. By week 8 you will have 24 reads, 24 makes, and 24 versions of your question.</p>
+  <p class="big">You will not be short of material.</p>
+  <div class="notes">
+    <p>This is the operational core. If they do this, the module works. If they don't, no amount of cleverness in the final write-up will save them. Repeat it.</p>
+  </div>
+</section>
+
+<!-- 26 -->
+<section class="slide" id="s26">
+  <div class="slide-meta"><span class="num">26 / 30</span><span>Failure modes</span></div>
+  <h2>Common failure modes</h2>
+  <p>In my experience, the projects that struggle do one of these:</p>
+  <ul>
+    <li><strong>All theme, no question.</strong> ("I'm interested in memory and sound.") — Becomes a mood board.</li>
+    <li><strong>All project, no context.</strong> ("I'm building a synth.") — Becomes a tools demo.</li>
+    <li><strong>All technique, no purpose.</strong> ("I'm using diffusion models.") — Becomes a tutorial.</li>
+    <li><strong>All argument, no artefact.</strong> ("I want to critique surveillance.") — Becomes an essay.</li>
+    <li><strong>All artefact, no argument.</strong> ("Here's the thing I made.") — Becomes a portfolio piece.</li>
+  </ul>
+  <p class="big">The good news: each of these is recoverable. We have 8 weeks.</p>
+  <div class="notes">
+    <p>Read these out, get a laugh of recognition. Tell them: by week 4 you'll know which failure mode is yours. Knowing is half the fix.</p>
+  </div>
+</section>
+
+<!-- 27 -->
+<section class="slide takeaways" id="s27">
+  <div class="slide-meta"><span class="num">27 / 30</span><span>Takeaways</span></div>
+  <h2>What I want you to leave with today</h2>
+  <ol>
+    <li>Research is a structured attempt to make something not previously known, in a form others can examine.</li>
+    <li>Practice-based research produces procedural, tacit, and situated knowledge — which is real knowledge.</li>
+    <li>The difference between a project and a research project is whether you can name the edge, the wager, and the test.</li>
+    <li>Your assessment will reward citation as the floor and contribution as the ceiling.</li>
+    <li>The weekly habits — read, make, refine — are the actual work of this module.</li>
+  </ol>
+  <div class="notes">
+    <p>Slow down here. Read each one. Pause. These five lines are the take-away.</p>
+  </div>
+</section>
+
+<!-- 28 -->
+<section class="slide" id="s28">
+  <div class="slide-meta"><span class="num">28 / 30</span><span>For next week</span></div>
+  <h2>For next week</h2>
+  <p>Read <strong>one</strong> of these (we'll discuss in week 2):</p>
+  <ul>
+    <li>Smith, H. &amp; Dean, R. T. (eds.) (2009). <a href="https://edinburghuniversitypress.com/book-practice-led-research-research-led-practice-in-the-creative-arts.html"><em>Practice-led Research, Research-led Practice in the Creative Arts.</em></a> Edinburgh University Press. — Introduction chapter.</li>
+    <li>Candy, L. (2006). <a href="https://www.creativityandcognition.com/wp-content/uploads/2011/04/PBR-Guide-1.1-2006.pdf"><em>Practice Based Research: A Guide.</em></a> CCS Report, University of Technology Sydney.</li>
+    <li>Borgdorff, H. (2011). <a href="https://clab.iat.sfu.ca/804/uploads/Site/RoutledgeCompanion.pdf"><em>The production of knowledge in artistic research.</em></a> In Biggs &amp; Karlsson (eds.), <a href="https://www.routledge.com/The-Routledge-Companion-to-Research-in-the-Arts/Biggs-Karlsson/p/book/9780415697941"><em>The Routledge Companion to Research in the Arts.</em></a></li>
+  </ul>
+  <p>Bring <strong>one</strong> half-page note: what does this text say practice-based research <em>is</em>, and where do you agree or disagree?</p>
+  <div class="notes">
+    <p>Don't make them read all three. The Smith &amp; Dean intro is the most useful. Borgdorff is for the more theoretically inclined. Candy is the most practical. Tell them which fits them.</p>
+  </div>
+</section>
+
+<!-- 29 -->
+<section class="slide" id="s29">
+  <div class="slide-meta"><span class="num">29 / 30</span><span>Tutorials &amp; contact</span></div>
+  <h2>Tutorials and contact</h2>
+  <p><em>To be filled in based on team-teaching arrangements:</em></p>
+  <ul>
+    <li>Tutorial slot times</li>
+    <li>Studio access / equipment</li>
+    <li>Reading list location</li>
+    <li>Discord / Slack / forum</li>
+    <li>Office hours</li>
+  </ul>
+  <div class="notes">
+    <p>Fill in with co-teaching team. Be clear about who to email for what.</p>
+  </div>
+</section>
+
+<!-- 30 -->
+<section class="slide" id="s30">
+  <div class="slide-meta"><span class="num">30 / 30</span><span>Questions</span></div>
+  <h2>Questions</h2>
+  <p class="big">What's unclear?</p>
+  <p class="big">What worries you?</p>
+  <p class="big">What are you already excited about?</p>
+  <div class="notes">
+    <p>Leave 10 minutes minimum. The questions students ask in the first lecture tell you most of what you need to know about the cohort. Listen for: who's panicking about not having a project yet (normal), who's certain they already have their project (worry), who's quiet (check in privately).</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+  // keyboard nav: arrow keys / space / page-down / j/k jump between slides
+  (function(){
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    function currentIndex() {
+      const y = window.scrollY + 80;
+      for (let i = slides.length - 1; i >= 0; i--) {
+        if (slides[i].offsetTop <= y) return i;
+      }
+      return 0;
+    }
+    function go(delta) {
+      const i = Math.max(0, Math.min(slides.length - 1, currentIndex() + delta));
+      slides[i].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.addEventListener('keydown', (e) => {
+      // ignore when interacting with form fields or details
+      if (e.target.matches('input, textarea, [contenteditable]')) return;
+      switch (e.key) {
+        case 'ArrowDown': case 'PageDown': case ' ': case 'j':
+          e.preventDefault(); go(1); break;
+        case 'ArrowUp': case 'PageUp': case 'k':
+          e.preventDefault(); go(-1); break;
+        case 'Home':
+          e.preventDefault(); slides[0].scrollIntoView({behavior:'smooth'}); break;
+        case 'End':
+          e.preventDefault(); slides[slides.length-1].scrollIntoView({behavior:'smooth'}); break;
+      }
+    });
+  })();
+</script>
+
+</body>
+</html>
