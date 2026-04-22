@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Practice as Research — Lecture 2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@300;400&display=swap');
+
+  :root {
+    --fg: #111;
+    --fg-dim: rgba(17,17,17,0.35);
+    --fg-mid: rgba(17,17,17,0.55);
+    --bg: #fdfdfd;
+    --font-head: 'DM Sans', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+
+  #bg-canvas {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+  }
+
+  #slides-layer {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 10; pointer-events: none;
+  }
+
+  .slide {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 56px 12% 88px;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.75s cubic-bezier(0.33,1,0.68,1), transform 0.75s cubic-bezier(0.33,1,0.68,1);
+    pointer-events: none;
+  }
+  .slide.active { opacity: 1; transform: translateY(0); }
+  .slide .inner { max-width: 680px; width: 100%; }
+
+  .slide h1 {
+    font-family: var(--font-head); font-weight: 200; font-size: clamp(32px, 5vw, 48px);
+    line-height: 1.12; letter-spacing: -0.8px; color: var(--fg); margin-bottom: 12px;
+  }
+  .slide h2 {
+    font-family: var(--font-head); font-weight: 300; font-size: clamp(22px, 3.2vw, 32px);
+    line-height: 1.2; letter-spacing: -0.3px; color: var(--fg); margin-bottom: 18px;
+  }
+  .slide p {
+    font-family: var(--font-body); font-weight: 300; font-size: clamp(13px, 1.6vw, 16px);
+    line-height: 1.7; color: var(--fg); margin-bottom: 12px;
+  }
+  .slide p.dim { color: var(--fg-dim); }
+  .slide p.mid { color: var(--fg-mid); }
+  .slide .subtitle {
+    font-family: var(--font-mono); font-weight: 300; font-size: clamp(10px, 1.1vw, 12px);
+    color: var(--fg-dim); letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .slide .spacer { height: 14px; }
+  .slide .em { font-weight: 500; }
+  .slide .it { font-style: italic; }
+
+  .slide .two-col {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin: 10px 0;
+  }
+  .slide .col-label {
+    font-family: var(--font-mono); font-weight: 400; font-size: 11px;
+    color: var(--fg-dim); letter-spacing: 0.8px; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .slide .numbered { counter-reset: item; }
+  .slide .numbered p::before {
+    counter-increment: item;
+    content: counter(item) ".";
+    font-family: var(--font-mono); font-weight: 400; font-size: 12px;
+    color: var(--fg-dim); margin-right: 6px;
+  }
+
+  #nav {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; align-items: center; gap: 18px;
+    background: rgba(253,253,253,0.88); backdrop-filter: blur(16px);
+    border: 1px solid rgba(0,0,0,0.06); border-radius: 40px;
+    padding: 8px 22px; pointer-events: auto; user-select: none;
+  }
+  #nav button {
+    background: none; border: none; cursor: pointer;
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; transition: background 0.2s; color: var(--fg);
+  }
+  #nav button:hover { background: rgba(0,0,0,0.05); }
+  #nav button svg { width: 16px; height: 16px; }
+  #counter {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 300;
+    color: var(--fg-mid); letter-spacing: 0.4px; min-width: 48px; text-align: center;
+  }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 1.5px;
+    background: var(--fg); z-index: 100;
+    transition: width 0.7s cubic-bezier(0.33,1,0.68,1);
+  }
+
+  #topbar {
+    position: fixed; top: 18px; left: 24px; z-index: 100;
+    font-family: var(--font-mono); font-size: 10px; font-weight: 300;
+    color: var(--fg-dim); letter-spacing: 2px; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="progress"></div>
+<div id="topbar">MSc Creative Computing — Week 2</div>
+
+<div id="slides-layer">
+
+  <div class="slide active">
+    <div class="inner">
+      <p class="subtitle">Lecture 2 of 8</p>
+      <h1>Practice as Research</h1>
+      <p class="mid">How practice produces knowledge</p>
+      <div class="spacer"></div>
+      <p class="dim">Mick Grierson<br>Creative Computing Institute, UAL</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Recap: Where We Left Off</h2>
+      <p class="mid">Last week we established:</p>
+      <div class="spacer"></div>
+      <div class="numbered">
+        <p>Research is a structured attempt to produce something not previously known, in a form others can examine.</p>
+        <p>Practice-based research mostly produces <span class="em">procedural, tacit, and situated</span> knowledge.</p>
+        <p>The difference between a project and a research project is naming the <span class="em">edge</span>, the <span class="em">wager</span>, and the <span class="em">test</span>.</p>
+      </div>
+      <div class="spacer"></div>
+      <p class="mid it">Today: how does practice do this? What are the mechanisms?</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Three Texts, Three Frames</h2>
+      <div class="spacer"></div>
+      <p><span class="em">Smith &amp; Dean (2009)</span> — practice and research as an iterative cycle, not two separate activities.</p>
+      <p><span class="em">Candy (2006)</span> — a distinction between practice-based and practice-led research, and what counts as evidence.</p>
+      <p><span class="em">Borgdorff (2011)</span> — a philosophical argument that artistic practice is itself a form of knowledge production.</p>
+      <div class="spacer"></div>
+      <p class="dim">Each gives you a different angle. None is complete alone.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Why Does This Matter?</h2>
+      <p class="mid">At some point you need to answer:</p>
+      <div class="spacer"></div>
+      <p>What kind of knowledge is my project producing?</p>
+      <p>How do I know it's new?</p>
+      <p>How do I show someone else it's real?</p>
+      <p>Where does the knowledge live — in the artefact, the documentation, the method, or somewhere else?</p>
+      <div class="spacer"></div>
+      <p class="dim">If you can't answer these, you have a project but not yet a research project.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Smith &amp; Dean: The Iterative Cyclic Web</h2>
+      <div class="spacer"></div>
+      <p>Practice and research are <span class="em">not sequential</span>. They are interleaved and mutually generative.</p>
+      <p>Practice generates questions that research cannot anticipate. Research reframes what you're doing and opens directions you wouldn't have found by making alone.</p>
+      <p class="dim">The cycle runs continuously, not once.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Unpacking the Cycle</h2>
+      <p class="mid">Three nodes, not a linear sequence:</p>
+      <div class="spacer"></div>
+      <div class="numbered">
+        <p>Practice / creative work</p>
+        <p>Research</p>
+        <p>Output (artefact and/or text)</p>
+      </div>
+      <div class="spacer"></div>
+      <p>Clockwise: the creative practice path. Anticlockwise: the research path. The two paths intersect and feed each other at every node.</p>
+      <p class="dim">That's what makes it a web, not a pipeline.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>What This Means For You</h2>
+      <div class="spacer"></div>
+      <p>Don't wait to finish making before you start contextualising. Read while you make. Let the reading change what you make.</p>
+      <p>Don't treat the written output as a retrospective report. It's a living document that evolves alongside the practice.</p>
+      <p>Expect your research question to change. If it doesn't, you probably aren't genuinely cycling.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Candy: Practice-Based vs Practice-Led</h2>
+      <div class="spacer"></div>
+      <p><span class="em">Practice-based:</span> the creative artefact is the basis of the contribution to knowledge. The claim cannot be made without the artefact.</p>
+      <div class="spacer"></div>
+      <p><span class="em">Practice-led:</span> practice is the method that leads to new understandings, but the contribution is primarily articulated in text. The knowledge output is separable from the artefact.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Why the Distinction Matters</h2>
+      <p class="mid">Not about quality — about where knowledge lives and how you demonstrate it.</p>
+      <div class="spacer"></div>
+      <div class="two-col">
+        <div>
+          <p class="col-label">Practice-based</p>
+          <p>Artefact must be accessible. You must articulate what knowledge it embodies. Your audience needs to experience the work.</p>
+        </div>
+        <div>
+          <p class="col-label">Practice-led</p>
+          <p>Written output carries the primary claim. Insight is transferable. Artefact supports the argument but doesn't replace it.</p>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <p class="dim">Most MSc projects at CCI are practice-based. Know which one yours is.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>What Counts as Evidence?</h2>
+      <div class="spacer"></div>
+      <p>The artefact itself, presented where it can be encountered.</p>
+      <p>Documentation of process — notebooks, iterations, code, video.</p>
+      <p>Reflective commentary connecting decisions to knowledge produced.</p>
+      <p>Peer response and critical reception.</p>
+      <p>Comparative analysis with existing work.</p>
+      <div class="spacer"></div>
+      <p class="dim">None alone is sufficient. The strength is in their combination.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Borgdorff: Knowledge in Artistic Research</h2>
+      <div class="spacer"></div>
+      <p>Artistic practice is not merely a vehicle for research — it is a <span class="em">mode of knowledge production</span> in its own right.</p>
+      <div class="spacer"></div>
+      <p class="mid">Frayling's triad (1993):</p>
+      <p>Research <span class="em">into</span> the arts — studying art from outside.<br>
+         Research <span class="em">for</span> the arts — instrumental research that serves practice.<br>
+         Research <span class="em">through</span> the arts — the artistic practice itself is the epistemic activity.</p>
+      <div class="spacer"></div>
+      <p class="dim">The third category is epistemologically legitimate and distinct.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>What Makes It Research?</h2>
+      <p class="mid">Three conditions:</p>
+      <div class="spacer"></div>
+      <div class="numbered">
+        <p><span class="em">Intent</span> — the practitioner sets out to produce knowledge, not only to make a work.</p>
+        <p><span class="em">Method</span> — the practice follows some discernible method that can be articulated and examined.</p>
+        <p><span class="em">Context</span> — the work is situated within a relevant discourse, contributing to an ongoing conversation.</p>
+      </div>
+      <div class="spacer"></div>
+      <p class="dim">Without intent: craft. Without method: intuition. Without context: self-expression.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Knowledge That Doesn't Fit Neatly Into Words</h2>
+      <div class="spacer"></div>
+      <p><span class="em">Non-propositional</span> — can't be fully captured in statements.</p>
+      <p><span class="em">Embodied</span> — carried in materials, processes, physical actions, perceptual experiences.</p>
+      <p><span class="em">Non-discursive</span> — communicates through forms other than language.</p>
+      <div class="spacer"></div>
+      <p class="dim">This doesn't make it less real or less rigorous. It means the methods of demonstrating it are different.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Putting the Three Together</h2>
+      <div class="spacer"></div>
+      <p><span class="em">Smith &amp; Dean</span> — maps the process clearly as a cycle.</p>
+      <p><span class="em">Candy</span> — gives practical categories for structuring a project.</p>
+      <p><span class="em">Borgdorff</span> — provides the philosophical justification.</p>
+      <div class="spacer"></div>
+      <p class="mid">Each has a failure mode: aimless cycling, oversimplified binary, shield against scrutiny.</p>
+      <p>Use them as lenses, not as alibis.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>The Trap</h2>
+      <p class="mid it">"The work speaks for itself."</p>
+      <div class="spacer"></div>
+      <p>It doesn't. Or rather: it does, but not to everyone, and not about everything.</p>
+      <p>The artefact communicates something. But it doesn't communicate its own context, its relationship to prior work, or why its contribution matters.</p>
+      <p>Non-discursive knowledge still needs a discursive frame.</p>
+      <div class="spacer"></div>
+      <p class="em">Write differently, not less.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>What This Means For Your Project</h2>
+      <div class="spacer"></div>
+      <p><span class="em">Your process is part of your output.</span> Document it from the start.</p>
+      <p><span class="em">Your reading and your making should talk to each other.</span> If your reading list never changes what you build, you're not cycling.</p>
+      <p><span class="em">Know which mode you're in.</span> Practice-based or practice-led? This determines how you structure everything.</p>
+      <p><span class="em">Articulate, articulate, articulate.</span></p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Discussion / Exercise</h2>
+      <p class="mid">15 minutes, in pairs or small groups:</p>
+      <div class="spacer"></div>
+      <div class="numbered">
+        <p>Is your project <span class="em">practice-based</span> or <span class="em">practice-led</span>? (Candy)</p>
+        <p>Does it have <span class="em">intent</span>, <span class="em">method</span>, and <span class="em">context</span>? (Borgdorff)</p>
+        <p>Where are you in the cycle? What are you neglecting? (Smith &amp; Dean)</p>
+      </div>
+      <div class="spacer"></div>
+      <p class="dim">Be honest. Diagnosis, not performance.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>For Next Week</h2>
+      <p class="mid">Week 3: Situating research in a field — finding the gap.</p>
+      <div class="spacer"></div>
+      <p>Read one published paper in your area of interest — any venue.</p>
+      <div class="spacer"></div>
+      <p class="mid">Write a half-page note answering:</p>
+      <p>What does this paper claim is new?<br>
+         What prior work does it cite?<br>
+         What does it not address — and could that gap be your gap?</p>
+      <div class="spacer"></div>
+      <p class="dim">Bring the note and the paper reference to the session.</p>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner">
+      <h2>Key Takeaways</h2>
+      <div class="spacer"></div>
+      <div class="numbered">
+        <p>Practice and research are not sequential — they cycle.</p>
+        <p>Know whether your knowledge lives in the artefact or in the text — and build accordingly.</p>
+        <p>Artistic practice can be legitimate inquiry — but only with intent, method, and context.</p>
+        <p>"The work speaks for itself" is almost always wrong. Write differently, not less.</p>
+        <p>Your process is your research. Document it now. Not later. Now.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide">
+    <div class="inner" style="text-align:center;">
+      <h2>Questions</h2>
+      <div class="spacer"></div>
+      <p class="mid">What's unclear?</p>
+      <p class="mid">What do you disagree with?</p>
+      <p class="mid">What does this change about how you think about your project?</p>
+    </div>
+  </div>
+
+</div>
+
+<div id="nav">
+  <button id="prev-btn" aria-label="Previous">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <span id="counter">01 / 20</span>
+  <button id="next-btn" aria-label="Next">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  /* ======= NAVIGATION ======= */
+  const slides = document.querySelectorAll('.slide');
+  const TOTAL = slides.length;
+  let cur = 0, busy = false;
+
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+
+  const pad = n => String(n+1).padStart(2,'0');
+
+  function ui(){
+    counter.textContent = pad(cur) + ' / ' + pad(TOTAL-1);
+    progress.style.width = ((cur+1)/TOTAL*100)+'%';
+    prevBtn.style.opacity = cur===0?0.2:1;
+    nextBtn.style.opacity = cur===TOTAL-1?0.2:1;
+  }
+
+  function go(n){
+    if(n<0||n>=TOTAL||n===cur||busy) return;
+    busy = true;
+    slides[cur].classList.remove('active');
+    cur = n;
+    slides[cur].classList.add('active');
+    targetZ = sceneZ(cur);
+    ui();
+    setTimeout(()=>{ busy=false; }, 800);
+  }
+
+  prevBtn.onclick = ()=> go(cur-1);
+  nextBtn.onclick = ()=> go(cur+1);
+
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){ e.preventDefault(); go(cur+1); }
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ e.preventDefault(); go(cur-1); }
+  });
+
+  let tx=0,ty=0;
+  document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+  document.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-tx;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(e.changedTouches[0].clientY-ty)) dx<0?go(cur+1):go(cur-1);
+  },{passive:true});
+
+  let wt=null;
+  document.addEventListener('wheel',e=>{
+    e.preventDefault(); if(wt)return;
+    wt=setTimeout(()=>{wt=null},900);
+    e.deltaY>0?go(cur+1):go(cur-1);
+  },{passive:false});
+
+  ui();
+
+  /* ======= THREE.JS ======= */
+  const canvas = document.getElementById('bg-canvas');
+  const W = ()=>window.innerWidth, H = ()=>window.innerHeight;
+
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(W(),H());
+  renderer.setClearColor(0xfdfdfd,1);
+
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(50, W()/H(), 0.1, 600);
+  cam.position.set(0,0,0);
+
+  window.addEventListener('resize',()=>{
+    renderer.setSize(W(),H());
+    cam.aspect=W()/H();
+    cam.updateProjectionMatrix();
+  });
+
+  const GAP = 16;
+  const sceneZ = i => -i*GAP;
+  let targetZ = 0;
+
+  const wm = (op=0.1) => new THREE.MeshBasicMaterial({color:0x000000,wireframe:true,transparent:true,opacity:op});
+
+  const grps = [];
+  function mkG(i){
+    const g = new THREE.Group();
+    g.position.z = sceneZ(i) - 7;
+    scene.add(g);
+    grps.push(g);
+    return g;
+  }
+
+  /* S1: large icosahedron */
+  (()=>{
+    const g=mkG(0);
+    const m=new THREE.Mesh(new THREE.IcosahedronGeometry(3,1),wm(0.08));
+    m.position.set(3,0.2,0);
+    m.userData={ry:0.0025,rx:0.0008};
+    g.add(m);
+  })();
+
+  /* S2: three spheres */
+  (()=>{
+    const g=mkG(1);
+    [[-3.5,1.3],[-3.5,0],[-3.5,-1.3]].forEach(([x,y],i)=>{
+      const m=new THREE.Mesh(new THREE.SphereGeometry(0.4,8,6),wm(0.1));
+      m.position.set(x,y,0);
+      m.userData={ry:0.006+i*0.002};
+      g.add(m);
+    });
+  })();
+
+  /* S3: three platonic solids */
+  (()=>{
+    const g=mkG(2);
+    const gs=[new THREE.TetrahedronGeometry(0.7),new THREE.OctahedronGeometry(0.7),new THREE.DodecahedronGeometry(0.7)];
+    [[-2.8,-1.5],[0,-1.5],[2.8,-1.5]].forEach(([x,y],i)=>{
+      const m=new THREE.Mesh(gs[i],wm(0.1));
+      m.position.set(x,y,0);
+      m.userData={ry:0.004+i*0.001,rx:0.002};
+      g.add(m);
+    });
+  })();
+
+  /* S4: cube */
+  (()=>{
+    const g=mkG(3);
+    const m=new THREE.Mesh(new THREE.BoxGeometry(1.8,1.8,1.8),wm(0.07));
+    m.position.set(3.8,0.5,0);
+    m.userData={ry:0.003,rx:0.002,rz:0.001};
+    g.add(m);
+  })();
+
+  /* S5: torus — cycle */
+  (()=>{
+    const g=mkG(4);
+    const m=new THREE.Mesh(new THREE.TorusGeometry(2.5,0.05,12,48),wm(0.09));
+    m.position.set(0,0,-2);
+    m.rotation.x=0.5;
+    m.userData={ry:0.003};
+    g.add(m);
+  })();
+
+  /* S6: three rings */
+  (()=>{
+    const g=mkG(5);
+    [[Math.PI/2,0,0],[0,0,Math.PI/2],[Math.PI/4,Math.PI/4,0]].forEach((r,i)=>{
+      const m=new THREE.Mesh(new THREE.TorusGeometry(1.3,0.025,8,32),wm(0.09));
+      m.position.set(0,0,-1.5);
+      m.rotation.set(...r);
+      m.userData={ry:0.004+i*0.001};
+      g.add(m);
+    });
+  })();
+
+  /* S7: small icosahedron */
+  (()=>{
+    const g=mkG(6);
+    const m=new THREE.Mesh(new THREE.IcosahedronGeometry(0.7,0),wm(0.08));
+    m.position.set(-4,-0.5,0);
+    m.userData={ry:0.005,rx:0.003};
+    g.add(m);
+  })();
+
+  /* S8: two mirrored pyramids */
+  (()=>{
+    const g=mkG(7);
+    const m1=new THREE.Mesh(new THREE.ConeGeometry(0.9,1.8,4),wm(0.1));
+    m1.position.set(-3.8,-0.5,0); m1.userData={ry:0.004}; g.add(m1);
+    const m2=new THREE.Mesh(new THREE.ConeGeometry(0.9,1.8,4),wm(0.1));
+    m2.position.set(3.8,0.5,0); m2.rotation.z=Math.PI; m2.userData={ry:-0.004}; g.add(m2);
+  })();
+
+  /* S9: hexagonal ring */
+  (()=>{
+    const g=mkG(8);
+    const m=new THREE.Mesh(new THREE.TorusGeometry(0.8,0.03,6,6),wm(0.1));
+    m.position.set(4,0,0);
+    m.userData={rz:0.005};
+    g.add(m);
+  })();
+
+  /* S10: grid of small boxes */
+  (()=>{
+    const g=mkG(9);
+    for(let i=0;i<9;i++){
+      const m=new THREE.Mesh(new THREE.BoxGeometry(0.28,0.28,0.28),wm(0.08));
+      m.position.set(-4+i%3*0.55, 1.1-Math.floor(i/3)*0.55, 0);
+      m.userData={ry:0.003+i*0.0005,rx:0.002};
+      g.add(m);
+    }
+  })();
+
+  /* S11: large dodecahedron */
+  (()=>{
+    const g=mkG(10);
+    const m=new THREE.Mesh(new THREE.DodecahedronGeometry(2.8,0),wm(0.055));
+    m.position.set(0,0,-3);
+    m.userData={ry:0.002,rx:0.001,rz:0.0008};
+    g.add(m);
+  })();
+
+  /* S12: three interlocking tori */
+  (()=>{
+    const g=mkG(11);
+    [[0,0,0],[Math.PI/2,0,0],[0,Math.PI/2,0]].forEach((r,i)=>{
+      const m=new THREE.Mesh(new THREE.TorusGeometry(1.4,0.022,8,24),wm(0.08));
+      m.position.set(0,0,-2);
+      m.rotation.set(...r);
+      m.userData={ry:0.003*(i+1)};
+      g.add(m);
+    });
+  })();
+
+  /* S13: floating particles */
+  (()=>{
+    const g=mkG(12);
+    const pts=[[-2.5,1.5],[3,1],[-1.5,-1.2],[2.5,-0.5],[-3.5,0.2],[1,-1.5],[3.5,1.8],[-0.5,1.8]];
+    pts.forEach(([x,y],i)=>{
+      const m=new THREE.Mesh(new THREE.SphereGeometry(0.06,6,4),wm(0.15));
+      m.position.set(x,y,0);
+      m.userData={drift:true,ph:i*0.8,sp:0.3+i*0.05};
+      g.add(m);
+    });
+  })();
+
+  /* S14: triangle formation */
+  (()=>{
+    const g=mkG(13);
+    const s=[
+      [new THREE.TorusGeometry(0.5,0.03,8,16),[-3,-1],{rx:0.005}],
+      [new THREE.ConeGeometry(0.45,0.9,4),[0,1.8],{ry:0.004}],
+      [new THREE.DodecahedronGeometry(0.5),[3,-1],{rz:0.003}]
+    ];
+    s.forEach(([geo,[x,y],ud])=>{
+      const m=new THREE.Mesh(geo,wm(0.1));
+      m.position.set(x,y,0); m.userData=ud; g.add(m);
+    });
+  })();
+
+  /* S15: shattered cubes */
+  (()=>{
+    const g=mkG(14);
+    [[-3.2,1,0.5],[-2.6,0,0.35],[-3.6,-0.8,0.4],[-2.1,-1,0.3]].forEach(([x,y,s],i)=>{
+      const m=new THREE.Mesh(new THREE.BoxGeometry(s,s,s),wm(0.11));
+      m.position.set(x,y,0); m.rotation.set(i*0.3,i*0.5,i*0.2);
+      m.userData={ry:0.004+i*0.001,rx:0.003}; g.add(m);
+    });
+  })();
+
+  /* S16: octahedron */
+  (()=>{
+    const g=mkG(15);
+    const m=new THREE.Mesh(new THREE.OctahedronGeometry(0.9,0),wm(0.08));
+    m.position.set(3.8,-0.3,0); m.userData={ry:0.005,rx:0.003}; g.add(m);
+  })();
+
+  /* S17: low-poly sphere */
+  (()=>{
+    const g=mkG(16);
+    const m=new THREE.Mesh(new THREE.SphereGeometry(2.8,8,6),wm(0.045));
+    m.position.set(0,0,-3); m.userData={ry:0.002}; g.add(m);
+  })();
+
+  /* S18: tetrahedron */
+  (()=>{
+    const g=mkG(17);
+    const m=new THREE.Mesh(new THREE.TetrahedronGeometry(0.7,0),wm(0.08));
+    m.position.set(3.8,1.2,0); m.userData={ry:0.005,rz:0.003}; g.add(m);
+  })();
+
+  /* S19: five shapes */
+  (()=>{
+    const g=mkG(18);
+    [new THREE.SphereGeometry(0.18,6,4),new THREE.BoxGeometry(0.3,0.3,0.3),
+     new THREE.OctahedronGeometry(0.2),new THREE.TetrahedronGeometry(0.22),
+     new THREE.DodecahedronGeometry(0.2)].forEach((geo,i)=>{
+      const m=new THREE.Mesh(geo,wm(0.12));
+      m.position.set(-2.5+i*1.25,-1.8,0); m.userData={ry:0.004+i*0.001}; g.add(m);
+    });
+  })();
+
+  /* S20: breathing sphere */
+  (()=>{
+    const g=mkG(19);
+    const m=new THREE.Mesh(new THREE.SphereGeometry(2,12,8),wm(0.06));
+    m.position.set(0,0,-2.5); m.userData={ry:0.002,breathe:true}; g.add(m);
+  })();
+
+  /* ======= RENDER LOOP ======= */
+  const clock = new THREE.Clock();
+
+  (function loop(){
+    requestAnimationFrame(loop);
+    const t = clock.getElapsedTime();
+
+    // smooth camera
+    cam.position.z += (targetZ - cam.position.z) * 0.055;
+
+    grps.forEach(g=>{
+      g.children.forEach(m=>{
+        const d=m.userData;
+        if(d.ry) m.rotation.y+=d.ry;
+        if(d.rx) m.rotation.x+=d.rx;
+        if(d.rz) m.rotation.z+=d.rz;
+        if(d.drift){
+          m.position.x+=Math.sin(t*d.sp+d.ph)*0.002;
+          m.position.y+=Math.cos(t*d.sp*0.7+d.ph)*0.0015;
+        }
+        if(d.breathe){
+          const s=1+Math.sin(t*0.5)*0.06;
+          m.scale.set(s,s,s);
+        }
+      });
+    });
+
+    renderer.render(scene,cam);
+  })();
+
+})();
+</script>
+</body>
+</html>
