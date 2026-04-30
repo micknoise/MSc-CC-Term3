@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSc Creative Computing</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@300;400&display=swap');
+
+  :root {
+    --fg: #111;
+    --fg-dim: rgba(17,17,17,0.35);
+    --fg-mid: rgba(17,17,17,0.58);
+    --bg: #fbfbfb;
+    --nav-bg: rgba(251,251,251,0.88);
+    --font-head: 'DM Sans', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --highlight-bg: rgba(255,255,255,0.86);
+  }
+
+  body.tone-dark {
+    --fg: #f3f3f3;
+    --fg-dim: rgba(243,243,243,0.4);
+    --fg-mid: rgba(243,243,243,0.72);
+    --bg: #0d0d0d;
+    --nav-bg: rgba(13,13,13,0.8);
+    --highlight-bg: rgba(0,0,0,0.78);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+  body { transition: background 0.8s ease; }
+
+  #bg-canvas {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+  }
+
+  #slides-layer {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 10; pointer-events: none;
+  }
+
+  .slide {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 56px 12% 88px;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.75s cubic-bezier(0.33,1,0.68,1), transform 0.75s cubic-bezier(0.33,1,0.68,1);
+    pointer-events: none;
+  }
+
+  .slide.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .slide .inner { max-width: 760px; width: 100%; }
+
+  .slide h1 {
+    font-family: var(--font-head); font-weight: 200; font-size: clamp(32px, 5vw, 50px);
+    line-height: 1.12; letter-spacing: -0.8px; color: var(--fg); margin-bottom: 14px;
+  }
+
+  .slide h2 {
+    font-family: var(--font-head); font-weight: 300; font-size: clamp(22px, 3.2vw, 34px);
+    line-height: 1.2; letter-spacing: -0.4px; color: var(--fg); margin-bottom: 16px;
+  }
+
+  .slide p {
+    font-family: var(--font-body); font-weight: 300; font-size: clamp(13px, 1.6vw, 17px);
+    line-height: 1.7; color: var(--fg); margin-bottom: 10px;
+  }
+
+  .slide p.mid { color: var(--fg-mid); }
+  .slide p.subtitle {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.6px;
+    color: var(--fg-dim); text-transform: uppercase;
+  }
+
+  .slide a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  .slide .em { font-weight: 700; }
+  .slide .it { font-style: italic; }
+
+  .numbered, .bulleted { margin: 8px 0 6px; }
+  .numbered { counter-reset: item; }
+  .numbered p::before {
+    counter-increment: item;
+    content: counter(item) '.';
+    font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim);
+    margin-right: 8px;
+  }
+
+  .bulleted p::before {
+    content: '•';
+    font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim);
+    margin-right: 8px;
+  }
+
+  #nav {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; align-items: center; gap: 18px;
+    background: var(--nav-bg); backdrop-filter: blur(16px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 40px;
+    padding: 8px 22px; pointer-events: auto; user-select: none;
+    transition: background 0.6s ease;
+  }
+
+  #nav button {
+    background: none; border: none; cursor: pointer; color: var(--fg);
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #nav button:hover { background: rgba(127,127,127,0.18); }
+  #nav button svg { width: 16px; height: 16px; }
+
+  #counter {
+    font-family: var(--font-mono); font-size: 12px; color: var(--fg-mid);
+    min-width: 58px; text-align: center;
+  }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 1.5px;
+    background: var(--fg); z-index: 100;
+    transition: width 0.7s cubic-bezier(0.33,1,0.68,1), background 0.6s ease;
+  }
+
+  #topbar {
+    position: fixed; top: 18px; left: 24px; z-index: 100;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.8px;
+    text-transform: uppercase; color: var(--fg-dim);
+  }
+
+  @media (max-width: 820px) {
+    .slide { padding: 44px 9% 92px; }
+    .slide p { font-size: 14px; line-height: 1.6; }
+    #topbar { left: 16px; top: 14px; }
+  }
+
+  /* Reading-mode highlight */
+  body.reading-mode .slide.active .inner {
+    background: var(--highlight-bg);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    border-radius: 6px;
+    padding: 18px 24px;
+    transition: background 0.35s ease;
+  }
+
+  /* Geometry / highlight / notes nav buttons */
+  #highlight-btn, #geom-btn, #notes-btn { opacity: 0.42; transition: opacity 0.2s ease; }
+  #highlight-btn.active, #geom-btn.active, #notes-btn.active { opacity: 1; }
+  #nav-sep { width: 1px; height: 18px; background: rgba(127,127,127,0.22); margin: 0 2px; }
+
+  /* ── Live coding panel ─────────────────────────────────────────────── */
+  #live-panel {
+    position: fixed; right: 0; top: 0; width: 44%; height: 100%; z-index: 20;
+    display: flex; flex-direction: column;
+    background: rgba(10,10,14,0.94); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border-left: 1px solid rgba(255,255,255,0.07);
+    transform: translateX(100%);
+    transition: transform 0.45s cubic-bezier(0.33,1,0.68,1);
+    pointer-events: none;
+  }
+  #live-panel.visible { transform: translateX(0); pointer-events: auto; }
+  #live-panel.collapsed { transform: translateX(calc(100% - 38px)); }
+
+  #live-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
+  }
+  #live-lang-badge {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px;
+    text-transform: uppercase; color: #5dfdcb;
+    background: rgba(93,253,203,0.1); border-radius: 4px; padding: 2px 7px;
+  }
+  #live-title {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; color: rgba(255,255,255,0.35); flex: 1;
+  }
+  #live-collapse-btn {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.35); padding: 4px;
+    display: flex; align-items: center; border-radius: 4px; transition: color 0.15s;
+  }
+  #live-collapse-btn:hover { color: rgba(255,255,255,0.8); }
+  #live-collapse-btn svg { width: 14px; height: 14px; }
+
+  #live-tabs {
+    display: flex; gap: 2px; padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+  }
+  .live-tab {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.4); padding: 3px 10px; border-radius: 4px;
+    background: none; border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
+  }
+  .live-tab:hover { color: rgba(255,255,255,0.7); }
+  .live-tab.active { color: #fff; border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+  #live-tabs:empty { display: none; }
+
+  #live-editor-mount { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+  #live-editor-mount .CodeMirror {
+    flex: 1; height: 100%; font-size: 12.5px; line-height: 1.65;
+    font-family: var(--font-mono); background: transparent !important; color: #e2e8f0;
+  }
+  #live-editor-mount .CodeMirror-scroll { height: 100%; }
+  .CodeMirror-gutters { background: rgba(0,0,0,0.3) !important; border-right: 1px solid rgba(255,255,255,0.06) !important; }
+  .CodeMirror-linenumber { color: rgba(255,255,255,0.2) !important; }
+  .CodeMirror-cursor { border-left-color: #5dfdcb !important; }
+  .CodeMirror-selected { background: rgba(93,253,203,0.1) !important; }
+  .cm-s-default .cm-keyword { color: #c792ea; }
+  .cm-s-default .cm-def { color: #82aaff; }
+  .cm-s-default .cm-variable { color: #e2e8f0; }
+  .cm-s-default .cm-string { color: #c3e88d; }
+  .cm-s-default .cm-number { color: #f78c6c; }
+  .cm-s-default .cm-comment { color: rgba(255,255,255,0.3); font-style: italic; }
+  .cm-s-default .cm-operator { color: #89ddff; }
+  .cm-s-default .cm-builtin { color: #ffcb6b; }
+  .cm-s-default .cm-atom { color: #f78c6c; }
+  .cm-s-default .cm-type { color: #c792ea; }
+
+  #live-error {
+    font-family: var(--font-mono); font-size: 11px; color: #ff5e5b;
+    padding: 6px 16px; flex-shrink: 0;
+    background: rgba(255,94,91,0.07); display: none;
+  }
+  #live-error:not(:empty) { display: block; }
+  #live-output {
+    font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.4);
+    padding: 6px 16px; flex-shrink: 0; display: none;
+  }
+  #live-output:not(:empty) { display: block; }
+
+  body.live-open .slide.has-live.active .inner {
+    transform: translateX(-18%);
+    transition: transform 0.45s cubic-bezier(0.33,1,0.68,1);
+  }
+
+  @media (max-width: 900px) {
+    #live-panel {
+      width: 100%; border-left: none; border-top: 1px solid rgba(255,255,255,0.07);
+      top: auto; bottom: 0; height: 46vh; transform: translateY(100%);
+    }
+    #live-panel.visible { transform: translateY(0); }
+    #live-panel.collapsed { transform: translateY(calc(100% - 40px)); }
+    body.live-open .slide.has-live.active .inner { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="progress"></div>
+<div id="topbar">Practice as Research — Lecture 2 · Mick Grierson — Creative Computing Institute, UAL</div>
+
+<div id="slides-layer">
+<div class="slide active">
+  <div class="inner">
+    <h1>Practice as Research 2</h1>
+    <p><span class="em">Practice as Research</span></p>
+    <p>Lecture 2 of 8 &mdash; How practice produces knowledge</p>
+    <p>Mick Grierson, <a href="https://www.arts.ac.uk/creative-computing-institute" target="_blank" rel="noopener noreferrer">Creative Computing Institute</a>, UAL</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Recap: where we left off</h2>
+    <p>Last week we established:</p>
+    <div class="numbered">
+      <p>Research is a structured attempt to produce something not previously known, in a form others can examine.</p>
+      <p>Practice-based research mostly produces <span class="em">procedural, tacit, and situated</span> knowledge.</p>
+      <p>The difference between a project and a research project is naming the <span class="em">edge</span>, the <span class="em">wager</span>, and the <span class="em">test</span>.</p>
+    </div>
+    <p>Today&#x27;s question: <span class="it">how</span> does practice do this? What are the mechanisms? And who has tried to map them?</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Three texts, three frames</h2>
+    <p>We&#x27;re working with three attempts to explain how practice produces knowledge:</p>
+    <div class="bulleted">
+      <p><span class="em">Smith &amp; Dean (2009)</span> &mdash; practice and research as an <span class="it">iterative cycle</span>, not two separate activities.</p>
+      <p><span class="em">Candy (2006)</span> &mdash; a distinction between <span class="it">practice-based</span> and <span class="it">practice-led</span> research, and what counts as evidence.</p>
+      <p><span class="em">Borgdorff (2011)</span> &mdash; a philosophical argument that artistic practice is <span class="it">itself</span> a form of knowledge production, not merely the subject of it.</p>
+    </div>
+    <p>Each gives you a different angle. None is complete alone.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Why does this matter practically?</h2>
+    <p>Because at some point you&#x27;ll need to answer these questions about your own work:</p>
+    <div class="bulleted">
+      <p>What kind of knowledge is my project producing?</p>
+      <p>How do I know it&#x27;s new?</p>
+      <p>How do I show someone else it&#x27;s real?</p>
+      <p>Where does the knowledge <span class="it">live</span> &mdash; in the artefact, in the documentation, in the method, or somewhere else?</p>
+    </div>
+    <p>If you can&#x27;t answer these, you have a project but not yet a research project.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Smith &amp; Dean: the iterative cyclic web</h2>
+    <p>Smith &amp; Dean&#x27;s central contribution is a diagram &mdash; the &quot;iterative cyclic web of practice-led research and research-led practice.&quot;</p>
+    <p>The key insight: <span class="em">practice and research are not sequential</span> (first I research, then I make &mdash; or first I make, then I write about it). They are interleaved and mutually generative.</p>
+    <div class="bulleted">
+      <p>Practice generates questions that research cannot anticipate.</p>
+      <p>Research reframes what you&#x27;re doing in the studio, and opens directions you wouldn&#x27;t have found by making alone.</p>
+    </div>
+    <p>The cycle runs continuously, not once.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Smith &amp; Dean: unpacking the cycle</h2>
+    <p>The diagram has <span class="em">three nodes</span>, not a linear sequence:</p>
+    <div class="numbered">
+      <p><span class="em">Practice / creative work</span></p>
+      <p><span class="em">Research</span></p>
+      <p><span class="em">Output</span> (artefact and/or text)</p>
+    </div>
+    <p>Two paths run through these nodes simultaneously:</p>
+    <div class="bulleted">
+      <p><span class="em">Clockwise: the creative practice path.</span> Practice generates output, output prompts further practice.</p>
+      <p><span class="em">Anticlockwise: the research path.</span> Research reframes the output, the output raises new research questions.</p>
+    </div>
+    <p>The two paths intersect and feed each other at every node. That&#x27;s what makes it a <span class="it">web</span>, not a pipeline. At any point, the direction of travel can reverse &mdash; a research insight redirects the practice, a surprise in the studio sends you back to the literature.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Smith &amp; Dean: what this means for you</h2>
+    <p>Practically, the iterative cyclic web tells you:</p>
+    <div class="bulleted">
+      <p><span class="em">Don&#x27;t wait to finish making before you start contextualising.</span> Read while you make. Let the reading change what you make. Let the making change what you read.</p>
+      <p><span class="em">Don&#x27;t treat the written output as a retrospective report.</span> It&#x27;s a living document that evolves alongside the practice.</p>
+      <p><span class="em">Expect your research question to change.</span> If it doesn&#x27;t, you probably aren&#x27;t genuinely cycling.</p>
+    </div>
+    <p>This is why I asked you to read, make, and refine <span class="it">every week</span>.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Candy: practice-based vs practice-led</h2>
+    <p>Linda Candy draws a distinction that the field now uses routinely:</p>
+    <p><span class="em">Practice-based research:</span> the creative artefact is the <span class="it">basis</span> of the contribution to knowledge. The claim cannot be made without the artefact. The artefact is not an illustration of the research &mdash; it <span class="it">is</span> the research, or at least an indispensable part of it.</p>
+    <p><span class="em">Practice-led research:</span> practice is the <span class="it">method</span> that leads to new understandings, but the contribution is primarily articulated in a text &mdash; a paper, a thesis, a framework. The practice informs the research but the knowledge output is separable from the artefact.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Candy: why the distinction matters</h2>
+    <p>The distinction is not about quality &mdash; it&#x27;s about <span class="em">where the knowledge lives</span> and <span class="em">how you demonstrate it</span>.</p>
+    <p>If your work is <span class="em">practice-based:</span></p>
+    <div class="bulleted">
+      <p>The artefact must be accessible (exhibited, documented, demonstrated).</p>
+      <p>You must still articulate <span class="it">what</span> knowledge the artefact embodies &mdash; but the artefact does crucial work that the writing alone cannot.</p>
+      <p>Your examiner, reviewer, or audience needs to <span class="it">experience</span> the work, not just read about it.</p>
+    </div>
+    <p>If your work is <span class="em">practice-led:</span></p>
+    <div class="bulleted">
+      <p>The written output carries the primary claim.</p>
+      <p>The practice generates insight, but the insight is transferable beyond that specific work.</p>
+      <p>The artefact supports the argument but doesn&#x27;t <span class="it">replace</span> it.</p>
+    </div>
+    <p>Most MSc projects at CCI are practice-based. Know which one yours is, and why.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Candy: what counts as evidence?</h2>
+    <p>Candy is practical about this. Evidence in practice-based research can include:</p>
+    <div class="bulleted">
+      <p>The artefact itself, presented in a context where it can be encountered.</p>
+      <p>Documentation of process (notebooks, iterations, code repositories, video).</p>
+      <p>Reflective commentary that connects the decisions made to the knowledge produced.</p>
+      <p>Peer response &mdash; exhibition feedback, review, critical reception.</p>
+      <p>Comparative analysis &mdash; how the work differs from, extends, or challenges existing work.</p>
+    </div>
+    <p>None of these alone is sufficient. The strength is in their combination.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Borgdorff: the production of knowledge in artistic research</h2>
+    <p>Henk Borgdorff makes a stronger philosophical claim than either Smith &amp; Dean or Candy.</p>
+    <p>He argues that <span class="em">artistic practice is not merely a vehicle for research</span> &mdash; it is a <span class="it">mode of knowledge production</span> in its own right. The practice doesn&#x27;t just inform the research; the practice <span class="it">is</span> research.</p>
+    <p>To make this argument, he draws on a three-part distinction (originally from Christopher Frayling, 1993):</p>
+    <div class="bulleted">
+      <p>Research <span class="em">into</span> the arts &mdash; studying art from the outside (art history, aesthetics, sociology of art).</p>
+      <p>Research <span class="em">for</span> the arts &mdash; instrumental research that serves practice (materials science, tool development).</p>
+      <p>Research <span class="em">through</span> the arts &mdash; research where the artistic practice itself is the epistemic activity.</p>
+    </div>
+    <p>Borgdorff&#x27;s position is that the third category &mdash; research <span class="it">through</span> the arts &mdash; is epistemologically legitimate and distinct.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Borgdorff: what makes it &quot;research&quot;?</h2>
+    <p>Borgdorff anticipates the obvious objection: &quot;If making art is research, isn&#x27;t <span class="it">all</span> art research?&quot;</p>
+    <p>His answer: no. Artistic practice becomes research when it satisfies three conditions:</p>
+    <div class="numbered">
+      <p><span class="em">Intent</span> &mdash; the practitioner sets out to produce knowledge, not only to make a work.</p>
+      <p><span class="em">Method</span> &mdash; the practice follows some discernible method, even if emergent or improvised, that can be articulated and examined.</p>
+      <p><span class="em">Context</span> &mdash; the work is situated within a relevant discourse, contributing to an ongoing conversation in a field.</p>
+    </div>
+    <p>Without intent, you have craft. Without method, you have intuition. Without context, you have self-expression. All three have value &mdash; but none alone is research.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Borgdorff: knowledge that doesn&#x27;t fit neatly into words</h2>
+    <p>Borgdorff makes a further move that matters for your work. He argues that the knowledge produced through artistic research is often:</p>
+    <div class="bulleted">
+      <p><span class="em">Non-propositional</span> &mdash; it can&#x27;t be fully captured in statements of the form &quot;X is true.&quot;</p>
+      <p><span class="em">Embodied</span> &mdash; it&#x27;s carried in materials, processes, physical actions, perceptual experiences.</p>
+      <p><span class="em">Non-discursive</span> &mdash; it communicates through forms other than language (sound, movement, visual structure, interaction).</p>
+    </div>
+    <p>This doesn&#x27;t make it less real or less rigorous. It means the methods of demonstrating it are different from writing a paper. The artefact, the performance, the installation &mdash; these are the <span class="it">vehicles</span> of the knowledge, not just examples of it.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Putting the three together</h2>
+    <p class="mid">Smith &amp; Dean · Candy · Borgdorff</p>
+    <p class="mid"><span class="em">Central claim</span> · Practice and research form an iterative cycle · Practice-based and practice-led are distinct modes · Artistic practice is itself a form of knowledge production</p>
+    <p class="mid"><span class="em">Where knowledge lives</span> · Distributed across the cycle &mdash; artefact, text, process · Depends on mode &mdash; artefact (based) or text (led) · In the practice and its material outputs</p>
+    <p class="mid"><span class="em">Strength</span> · Maps the <span class="it">process</span> clearly · Gives you practical categories for structuring a project · Provides the philosophical justification</p>
+    <p class="mid"><span class="em">Limitation</span> · Descriptive &mdash; doesn&#x27;t tell you how to evaluate quality · The binary can oversimplify hybrid projects · Can be used to excuse weak articulation (&quot;the work speaks for itself&quot;)</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>The trap: &quot;the work speaks for itself&quot;</h2>
+    <p>The most common misuse of these frameworks &mdash; especially Borgdorff&#x27;s &mdash; is the claim that artistic research doesn&#x27;t need to be articulated because <span class="em">the work speaks for itself.</span></p>
+    <p>It doesn&#x27;t. Or rather: it does, but not to everyone, and not about everything.</p>
+    <div class="bulleted">
+      <p>The artefact communicates <span class="it">something</span>. But it doesn&#x27;t communicate its own context, its relationship to prior work, or why its contribution matters.</p>
+      <p>You still need to write. The writing doesn&#x27;t replace the work &mdash; it does the things the work <span class="it">can&#x27;t</span> do.</p>
+      <p>Borgdorff himself is explicit: non-discursive knowledge still needs a discursive frame. The two are complementary.</p>
+    </div>
+    <p>Don&#x27;t use these texts as a reason not to write. Use them as a reason to write <span class="it">differently</span>.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>What this means for your project</h2>
+    <p>Some direct implications:</p>
+    <p><span class="em">Your process is part of your output.</span> Document it from the start. Not for assessment bureaucracy &mdash; because the choices you make <span class="it">are</span> the research.</p>
+    <p><span class="em">Your reading and your making should talk to each other.</span> If your reading list never changes what you build, you&#x27;re not cycling. If your making never changes what you read, same problem.</p>
+    <p><span class="em">Know which mode you&#x27;re in.</span> Are you producing knowledge that lives <span class="it">in</span> the artefact (practice-based) or knowledge that the artefact helped you discover but that can be stated independently (practice-led)? This determines how you structure everything from documentation to final submission.</p>
+    <p><span class="em">Articulate, articulate, articulate.</span> The frameworks give you permission to let the artefact do real epistemic work &mdash; but they don&#x27;t give you permission to be vague about what that work is.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Discussion / exercise (15 minutes)</h2>
+    <p>In pairs or small groups:</p>
+    <div class="numbered">
+      <p>Take your current project idea (or a project you admire).</p>
+      <p>Try to describe it in Candy&#x27;s terms: is it <span class="em">practice-based</span> or <span class="em">practice-led</span>?</p>
+      <p>Then apply Borgdorff&#x27;s three conditions: does it have <span class="em">intent</span>, <span class="em">method</span>, and <span class="em">context</span>?</p>
+      <p>Finally, where are you in Smith &amp; Dean&#x27;s cycle right now? Which zone are you spending most time in? Which are you neglecting?</p>
+    </div>
+    <p>Be honest. The point is diagnosis, not performance.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>For next week</h2>
+    <p>Week 3: <span class="em">Situating research in a field &mdash; finding the GAP.</span></p>
+    <p>Read <span class="em">one</span> of:</p>
+    <div class="bulleted">
+      <p>A published paper in your area of interest &mdash; any venue (NeurIPS, ISEA, Leonardo, SIGGRAPH, CHI, NIME, etc.)</p>
+      <p>A review or survey paper that maps a field relevant to your project.</p>
+    </div>
+    <p>Write a <span class="em">half-page note</span> answering:</p>
+    <div class="bulleted">
+      <p>What does this paper <span class="it">claim</span> is new?</p>
+      <p>What prior work does it cite?</p>
+      <p>What does it <span class="it">not</span> address &mdash; and could that gap be your gap?</p>
+    </div>
+    <p>Bring the note and the paper reference to the session.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Key takeaways</h2>
+    <div class="numbered">
+      <p><span class="em">Practice and research are not sequential &mdash; they cycle.</span> (Smith &amp; Dean)</p>
+      <p><span class="em">Know whether your knowledge lives in the artefact or in the text &mdash; and build accordingly.</span> (Candy)</p>
+      <p><span class="em">Artistic practice can be a legitimate mode of inquiry &mdash; but only with intent, method, and context.</span> (Borgdorff)</p>
+      <p><span class="em">&quot;The work speaks for itself&quot; is almost always wrong.</span> Write differently, not less.</p>
+      <p><span class="em">Your process is your research.</span> Document it now. Not later. Now.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Questions</h2>
+    <p>What&#x27;s unclear?</p>
+    <p>What do you disagree with?</p>
+    <p>What does this change about how you&#x27;re thinking about your project?</p>
+    <p># End of deck</p>
+  </div>
+</div>
+</div>
+
+<div id="nav">
+  <button id="prev-btn" aria-label="Previous">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <span id="counter">01 / 01</span>
+  <button id="next-btn" aria-label="Next">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+  <span id="nav-sep"></span>
+  <button id="highlight-btn" aria-label="Toggle text highlight [H]" title="Toggle text highlight [H]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20h16M9 16l3-9 3 9M6.8 13h10.4"/></svg>
+  </button>
+  <button id="geom-btn" aria-label="Toggle geometry [G]" title="Toggle geometry [G]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
+  <span style="width:1px;height:18px;background:rgba(127,127,127,0.22);margin:0 2px;display:inline-block"></span>
+  <button id="notes-btn" aria-label="Speaker notes [N]" title="Speaker notes [N]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+  </button>
+  <span style="width:1px;height:18px;background:rgba(127,127,127,0.22);margin:0 2px;display:inline-block"></span>
+  <button id="mute-btn" aria-label="Toggle audio [M]" title="Toggle audio [M]">
+    <svg id="mute-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    <svg id="mute-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+  </button>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const SLIDE_TITLES = [
+      "Practice as Research 2",
+      "Recap: where we left off",
+      "Three texts, three frames",
+      "Why does this matter practically?",
+      "Smith &amp; Dean: the iterative cyclic web",
+      "Smith &amp; Dean: unpacking the cycle",
+      "Smith &amp; Dean: what this means for you",
+      "Candy: practice-based vs practice-led",
+      "Candy: why the distinction matters",
+      "Candy: what counts as evidence?",
+      "Borgdorff: the production of knowledge in artistic research",
+      "Borgdorff: what makes it &quot;research&quot;?",
+      "Borgdorff: knowledge that doesn&#x27;t fit neatly into words",
+      "Putting the three together",
+      "The trap: &quot;the work speaks for itself&quot;",
+      "What this means for your project",
+      "Discussion / exercise (15 minutes)",
+      "For next week",
+      "Key takeaways",
+      "Questions"
+  ];
+  const SLIDE_IMAGES = [{"slide": 4, "src": "A-model-of-creative-arts-and-research-processes-The-iterative-cyclic-web-of-practice-led copy.jpg", "alt": "Alt text"}, {"slide": 7, "src": "1.png", "alt": "Alt text"}, {"slide": 11, "src": "2.png", "alt": "Alt text"}, {"slide": 15, "src": "3.png", "alt": "Alt text"}];
+  const SLIDE_SPEAKER_NOTES = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+  const SLIDE_LIVECODE = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
+  const SLIDE_NARRATION = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+  const SCENE_MODE = "default";
+  const SCENE_INTENSITY = "medium";
+
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const TOTAL = slides.length;
+  let cur = 0;
+  let busy = false;
+  let cmFocused = false;  // true while CodeMirror editor has keyboard focus
+
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const highlightBtn = document.getElementById('highlight-btn');
+  const geomBtn = document.getElementById('geom-btn');
+  const notesBtn = document.getElementById('notes-btn');
+
+  function hashString(str) {
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return (h >>> 0);
+  }
+
+  function mulberry32(seed) {
+    return function() {
+      let t = (seed += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const toneDarkIndices = new Set();
+  for (let i = 0; i < TOTAL; i++) {
+    const rnd = mulberry32(hashString(SLIDE_TITLES[i] + '#tone' + i));
+    if (rnd() < 0.16 && i !== 0) toneDarkIndices.add(i);
+  }
+
+  function isDarkSlide(idx) {
+    if (SCENE_MODE === 'tunnel') return true;
+    return toneDarkIndices.has(idx);
+  }
+
+  function pad(v) {
+    return String(v + 1).padStart(2, '0');
+  }
+
+  function syncTheme() {
+    const dark = isDarkSlide(cur);
+    document.body.classList.toggle('tone-dark', dark);
+    renderer.setClearColor(dark ? 0x0d0d0d : 0xfbfbfb, 1);
+  }
+
+  function syncUI() {
+    counter.textContent = pad(cur) + ' / ' + pad(TOTAL - 1);
+    progress.style.width = (((cur + 1) / TOTAL) * 100) + '%';
+    prevBtn.style.opacity = cur === 0 ? 0.25 : 1;
+    nextBtn.style.opacity = cur === TOTAL - 1 ? 0.25 : 1;
+  }
+
+  function go(nextIndex) {
+    if (busy || nextIndex < 0 || nextIndex >= TOTAL || nextIndex === cur) return;
+    busy = true;
+    slides[cur].classList.remove('active');
+    cur = nextIndex;
+    slides[cur].classList.add('active');
+    targetZ = sceneZ(cur);
+    syncTheme();
+    syncUI();
+    syncNotesPopup();
+    syncLivePanel(cur);
+    onSlideChange();
+    setTimeout(() => { busy = false; }, 760);
+  }
+
+  prevBtn.onclick = () => go(cur - 1);
+  nextBtn.onclick = () => go(cur + 1);
+
+  function toggleHighlight() {
+    highlightActive = !highlightActive;
+    document.body.classList.toggle('reading-mode', highlightActive);
+    highlightBtn.classList.toggle('active', highlightActive);
+  }
+
+  function toggleGeometry() {
+    geomVisible = !geomVisible;
+    for (const group of groups) {
+      for (const child of group.children) {
+        if (child.userData && child.userData.imageFloat) continue;
+        child.visible = geomVisible;
+      }
+    }
+    geomBtn.classList.toggle('active', !geomVisible);
+  }
+
+  highlightBtn.onclick = toggleHighlight;
+  geomBtn.onclick = toggleGeometry;
+
+  // ── Speaker notes popup ───────────────────────────────────────────────────
+  let notesWindow = null;
+
+  function notesPopupHtml(slideIndex) {
+    const note = SLIDE_SPEAKER_NOTES[slideIndex];
+    const title = SLIDE_TITLES[slideIndex];
+    const num = String(slideIndex + 1).padStart(2, '0');
+    const total = String(TOTAL).padStart(2, '0');
+    const escape = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const noteHtml = note
+      ? '<p>' + escape(note) + '</p>'
+      : '<p class="empty">No speaker notes for this slide.</p>';
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Notes — Slide ${num}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: system-ui, sans-serif; background: #1a1a1a; color: #e8e8e8;
+          padding: 24px 28px 32px; line-height: 1.65; }
+  header { display:flex; justify-content:space-between; align-items:baseline;
+             border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:20px; }
+  .slide-num { font-size:11px; letter-spacing:1.6px; text-transform:uppercase;
+                color:rgba(255,255,255,0.36); font-family:monospace; }
+  h2 { font-size:17px; font-weight:400; color:#fff; line-height:1.3; max-width:520px; }
+  .notes { font-size:15px; color:rgba(255,255,255,0.82); }
+  .notes p { margin-bottom:10px; }
+  .empty { color:rgba(255,255,255,0.28); font-style:italic; }
+</style>
+</head>
+<body>
+<header>
+  <h2>${escape(title)}</h2>
+  <span class="slide-num">${num} / ${total}</span>
+</header>
+<div class="notes">${noteHtml}</div>
+</body>
+</html>`;
+  }
+
+  function syncNotesPopup() {
+    if (!notesWindow || notesWindow.closed) return;
+    notesWindow.document.open();
+    notesWindow.document.write(notesPopupHtml(cur));
+    notesWindow.document.close();
+  }
+
+  function openNotesPopup() {
+    if (notesWindow && !notesWindow.closed) {
+      notesWindow.focus();
+      syncNotesPopup();
+      notesBtn.classList.add('active');
+      return;
+    }
+    const w = 520, h = 440;
+    const left = window.screenX + window.outerWidth;
+    const top  = window.screenY;
+    notesWindow = window.open('', 'speakerNotes',
+      `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`);
+    if (!notesWindow) {
+      alert('Popup blocked — please allow popups for this page to use speaker notes.');
+      return;
+    }
+    notesWindow.onbeforeunload = () => {
+      notesWindow = null;
+      notesBtn.classList.remove('active');
+    };
+    syncNotesPopup();
+    notesBtn.classList.add('active');
+  }
+
+  notesBtn.onclick = openNotesPopup;
+  // ─────────────────────────────────────────────────────────────────────────
+
+  document.addEventListener('keydown', (e) => {
+    if (cmFocused) return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+    if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
+    if (e.key === 'w' || e.key === 'W') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 's' || e.key === 'S') { e.preventDefault(); go(cur - 1); }
+    if (e.key === 'a' || e.key === 'A') { e.preventDefault(); wasdKeys['a'] = true; }
+    if (e.key === 'd' || e.key === 'D') { e.preventDefault(); wasdKeys['d'] = true; }
+    if (e.key === 'h' || e.key === 'H') { e.preventDefault(); toggleHighlight(); }
+    if (e.key === 'g' || e.key === 'G') { e.preventDefault(); toggleGeometry(); }
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openNotesPopup(); }
+    if (e.key === 'm' || e.key === 'M') { e.preventDefault(); toggleMute(); }
+    if (e.key === 'v' || e.key === 'V') { e.preventDefault(); speakNarration(cur); }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (e.key === 'a' || e.key === 'A') wasdKeys['a'] = false;
+    if (e.key === 'd' || e.key === 'D') wasdKeys['d'] = false;
+    // always clear pan keys so camera doesn't stick if key was pressed outside editor
+  });
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? cur + 1 : cur - 1);
+  }, { passive: true });
+
+  let wheelLock = null;
+  document.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (wheelLock) return;
+    wheelLock = setTimeout(() => (wheelLock = null), 860);
+    go(e.deltaY > 0 ? cur + 1 : cur - 1);
+  }, { passive: false });
+
+  syncUI();
+
+  const canvas = document.getElementById('bg-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 700);
+  cam.position.set(0, 0, 0);
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    cam.aspect = window.innerWidth / window.innerHeight;
+    cam.updateProjectionMatrix();
+  });
+
+  const GAP = 16;
+  const sceneZ = (i) => -i * GAP;
+  let targetZ = 0;
+  let camTargetX = 0;
+  let geomVisible = true;
+  let highlightActive = false;
+  const wasdKeys = {};
+
+  function lineMaterial(opacity, dark, colorOverride) {
+    return new THREE.MeshBasicMaterial({
+      color: colorOverride !== undefined ? colorOverride : (dark ? 0xffffff : 0x111111),
+      wireframe: true,
+      transparent: true,
+      opacity
+    });
+  }
+
+  function intensityScale() {
+    if (SCENE_INTENSITY === 'low') return 0.72;
+    if (SCENE_INTENSITY === 'high') return 1.34;
+    return 1.0;
+  }
+
+  function intensityMotionScale() {
+    if (SCENE_INTENSITY === 'low') return 0.8;
+    if (SCENE_INTENSITY === 'high') return 1.35;
+    return 1.0;
+  }
+
+  function scaledCount(base, minCount = 1) {
+    return Math.max(minCount, Math.round(base * intensityScale()));
+  }
+
+  function addRoadJourney(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const road = new THREE.Mesh(
+      new THREE.PlaneGeometry(26, 180, 14, 80),
+      lineMaterial(dark ? 0.22 : 0.13, dark)
+    );
+    road.position.set(0, -3.4, -58);
+    road.rotation.x = -Math.PI * 0.5;
+    road.userData = { roadWave: true, amp: 0.05 * ms, speed: 0.22 * ms, seed: rand() * 9.0 };
+    group.add(road);
+
+    const stripeCount = scaledCount(18, 8);
+    for (let i = 0; i < stripeCount; i++) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 2.0), lineMaterial(dark ? 0.28 : 0.16, dark));
+      stripe.position.set(0, -3.24, -10 - i * 8.6);
+      stripe.userData = { roadStripe: true };
+      group.add(stripe);
+    }
+
+    const skyCount = scaledCount(5, 2);
+    for (let i = 0; i < skyCount; i++) {
+      const geo = i % 2 ? new THREE.IcosahedronGeometry(0.38 + rand() * 0.45, 0) : new THREE.OctahedronGeometry(0.36 + rand() * 0.4, 0);
+      const m = new THREE.Mesh(geo, lineMaterial(dark ? 0.22 : 0.12, dark));
+      m.position.set((rand() - 0.5) * 12, 2.7 + rand() * 2.5, -8 - rand() * 48);
+      m.userData = { ry: (rand() - 0.5) * 0.008 * ms, drift: true, sp: (0.18 + rand() * 0.25) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  function addTunnelJourney(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const tunnel = new THREE.Mesh(
+      new THREE.CylinderGeometry(8.4, 8.4, 165, 20, 48, true),
+      lineMaterial(0.17, dark)
+    );
+    tunnel.position.set(0, 0, -60);
+    tunnel.rotation.x = Math.PI * 0.5;
+    tunnel.userData = { rz: 0.0008 * ms };
+    group.add(tunnel);
+
+    const ringCount = scaledCount(22, 10);
+    for (let i = 0; i < ringCount; i++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(7.1, 0.035, 8, 44), lineMaterial(0.2, dark));
+      ring.position.set(0, 0, -6 - i * 7.2);
+      ring.userData = { ry: (i % 2 ? 1 : -1) * 0.0012 * ms };
+      group.add(ring);
+    }
+  }
+
+  function addOceanJourney(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const ocean = new THREE.Mesh(
+      new THREE.PlaneGeometry(140, 165, 52, 64),
+      lineMaterial(dark ? 0.2 : 0.11, dark)
+    );
+    ocean.position.set(0, -3.2, -56);
+    ocean.rotation.x = -Math.PI * 0.5;
+    ocean.userData = { oceanWave: true, amp: (0.16 + rand() * 0.12) * ms, speed: (0.46 + rand() * 0.3) * ms, seed: rand() * 8.0 };
+    group.add(ocean);
+
+    const sail = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.6, 3), lineMaterial(dark ? 0.28 : 0.17, dark));
+    sail.position.set(0, -1.8, -8.5);
+    sail.rotation.z = Math.PI * 0.5;
+    sail.userData = { sailBoat: true, ph: rand() * 6.28 };
+    group.add(sail);
+
+    const skyCount = scaledCount(4, 2);
+    for (let i = 0; i < skyCount; i++) {
+      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3 + rand() * 0.25, 0), lineMaterial(dark ? 0.22 : 0.12, dark));
+      m.position.set((rand() - 0.5) * 16, 2.2 + rand() * 2.4, -16 - rand() * 38);
+      m.userData = { ry: (rand() - 0.5) * 0.006 * ms, drift: true, sp: (0.15 + rand() * 0.2) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  function addPsychedelicJourney(rand, group) {
+    const ms = intensityMotionScale();
+    const palette = [0xff5e5b, 0xf4f269, 0x5dfdcb, 0x43c6ff, 0xff7ee2];
+
+    const shapeCount = scaledCount(24, 12);
+    for (let i = 0; i < shapeCount; i++) {
+      const color = palette[i % palette.length];
+      const geo = i % 3 === 0 ? new THREE.TorusKnotGeometry(0.28 + rand() * 0.18, 0.055, 72, 12) :
+                  (i % 3 === 1 ? new THREE.IcosahedronGeometry(0.24 + rand() * 0.22, 0) : new THREE.OctahedronGeometry(0.22 + rand() * 0.2, 0));
+      const m = new THREE.Mesh(geo, lineMaterial(0.24, false, color));
+      m.position.set((rand() - 0.5) * 12.5, (rand() - 0.5) * 7.2, -3 - rand() * 58);
+      m.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
+      m.userData = { ry: (rand() - 0.5) * 0.03 * ms, rx: (rand() - 0.5) * 0.02 * ms, rz: (rand() - 0.5) * 0.02 * ms, drift: true, sp: (0.4 + rand() * 0.8) * ms, ph: rand() * 6.28, psychoHue: true };
+      group.add(m);
+    }
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(42, 160, 22, 76), lineMaterial(0.18, false, 0x43c6ff));
+    floor.position.set(0, -3.0, -52);
+    floor.rotation.x = -Math.PI * 0.5;
+    floor.userData = { oceanWave: true, amp: 0.11 * ms, speed: 1.15 * ms, seed: rand() * 8.0 };
+    group.add(floor);
+  }
+
+  function pickMotif(rand, group, dark) {
+    const intensity = intensityScale();
+    const ms = intensityMotionScale();
+    const baseOpacity = (dark ? 0.18 : 0.095) * Math.min(1.4, 0.9 + intensity * 0.25);
+    const motif = Math.floor(rand() * 5);
+
+    if (motif === 0) {
+      const rows = 12;
+      const cols = 20;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (rand() > 0.33) continue;
+          const m = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.55), lineMaterial(baseOpacity * 0.95, dark));
+          m.position.set((c - cols / 2) * 0.7, (r - rows / 2) * 0.7, -2.4 + Math.sin(c * 0.3) * 0.5);
+          m.rotation.x = -Math.PI * 0.38;
+          m.userData = { wave: true, k: (rand() * 2 + 0.5) * ms, ph: rand() * Math.PI * 2 };
+          group.add(m);
+        }
+      }
+      return;
+    }
+
+    if (motif === 1) {
+      const count = scaledCount(18 + Math.floor(rand() * 14), 10);
+      for (let i = 0; i < count; i++) {
+        const sz = 0.18 + rand() * 0.8;
+        const geo = rand() > 0.5 ? new THREE.BoxGeometry(sz, sz, sz) : new THREE.IcosahedronGeometry(sz * 0.7, 0);
+        const m = new THREE.Mesh(geo, lineMaterial(baseOpacity * 1.05, dark));
+        m.position.set((rand() - 0.5) * 10, (rand() - 0.5) * 6, -1.5 - rand() * 3);
+        m.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
+        m.userData = { ry: (rand() - 0.5) * 0.012 * ms, rx: (rand() - 0.5) * 0.008 * ms, drift: true, sp: (0.18 + rand() * 0.45) * ms, ph: rand() * 6.28 };
+        group.add(m);
+      }
+      return;
+    }
+
+    if (motif === 2) {
+      const ringCount = scaledCount(2 + Math.floor(rand() * 4), 2);
+      for (let i = 0; i < ringCount; i++) {
+        const radius = 0.9 + i * 0.55 + rand() * 0.2;
+        const m = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.025 + rand() * 0.02, 8, 48), lineMaterial(baseOpacity * 1.08, dark));
+        m.position.set((rand() - 0.5) * 2.2, (rand() - 0.5) * 1.8, -2.2 - i * 0.4);
+        m.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
+        m.userData = { ry: (rand() - 0.5) * 0.012 * ms, rz: (rand() - 0.5) * 0.008 * ms };
+        group.add(m);
+      }
+      return;
+    }
+
+    if (motif === 3) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(18, 12, 24, 18), lineMaterial(baseOpacity * 0.9, dark));
+      m.position.set(0, -2.8, -3.5);
+      m.rotation.x = -Math.PI * 0.47;
+      m.userData = { landscape: true, amp: (0.15 + rand() * 0.2) * ms, speed: (0.35 + rand() * 0.3) * ms, seed: rand() * 8.0 };
+      group.add(m);
+      return;
+    }
+
+    const count = scaledCount(20 + Math.floor(rand() * 20), 12);
+    for (let i = 0; i < count; i++) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.07 + rand() * 0.14, 6, 4), lineMaterial(baseOpacity * 1.2, dark));
+      m.position.set((rand() - 0.5) * 12, (rand() - 0.5) * 6.4, -1.5 - rand() * 4);
+      m.userData = { drift: true, sp: (0.2 + rand() * 0.8) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  const imageBySlide = new Map();
+  for (const spec of SLIDE_IMAGES) {
+    if (!imageBySlide.has(spec.slide)) imageBySlide.set(spec.slide, []);
+    imageBySlide.get(spec.slide).push(spec);
+  }
+
+  const textureLoader = new THREE.TextureLoader();
+
+  function addImagePlane(group, imageSpec, dark, slot) {
+    const wrap = new THREE.Group();
+    const mobile = window.innerWidth < 820;
+    const baseX = mobile ? 0 : 4.25;
+    const baseY = mobile ? -1.25 - slot * 1.9 : 0.7 - slot * 2.4;
+    wrap.position.set(baseX, baseY, -1.2 - slot * 0.12);
+    wrap.userData = { imageFloat: true, baseY, ph: slot * 0.9 };
+
+    const placeholderGeo = new THREE.PlaneGeometry(3.8, 2.2);
+    const imageMat = new THREE.MeshBasicMaterial({
+      color: dark ? 0xf3f3f3 : 0xffffff,
+      transparent: true,
+      opacity: dark ? 0.92 : 0.98,
+      side: THREE.DoubleSide,
+    });
+
+    const plane = new THREE.Mesh(placeholderGeo, imageMat);
+    wrap.add(plane);
+
+    const frame = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.02, 2.38),
+      lineMaterial(dark ? 0.25 : 0.18, dark)
+    );
+    frame.position.z = -0.03;
+    wrap.add(frame);
+
+    textureLoader.load(
+      imageSpec.src,
+      (tex) => {
+        if (tex.colorSpace !== undefined && THREE.SRGBColorSpace !== undefined) {
+          tex.colorSpace = THREE.SRGBColorSpace;
+        } else if (tex.encoding !== undefined && THREE.sRGBEncoding !== undefined) {
+          tex.encoding = THREE.sRGBEncoding;
+        }
+
+        const imgW = tex.image && tex.image.width ? tex.image.width : 16;
+        const imgH = tex.image && tex.image.height ? tex.image.height : 9;
+        const aspect = imgW / imgH;
+        const maxW = mobile ? 4.8 : 4.6;
+        const maxH = mobile ? 2.8 : 3.1;
+        let w = maxW;
+        let h = w / aspect;
+        if (h > maxH) {
+          h = maxH;
+          w = h * aspect;
+        }
+
+        plane.geometry.dispose();
+        frame.geometry.dispose();
+        plane.geometry = new THREE.PlaneGeometry(w, h);
+        frame.geometry = new THREE.PlaneGeometry(w + 0.24, h + 0.24);
+        imageMat.map = tex;
+        imageMat.needsUpdate = true;
+      },
+      undefined,
+      () => {
+        console.warn('Unable to load slide image:', imageSpec.src);
+      }
+    );
+
+    group.add(wrap);
+  }
+
+  function buildSceneForMode(rand, group, dark) {
+    if (SCENE_MODE === 'road') {
+      addRoadJourney(rand, group, dark);
+      return;
+    }
+    if (SCENE_MODE === 'tunnel') {
+      addTunnelJourney(rand, group, dark);
+      return;
+    }
+    if (SCENE_MODE === 'ocean') {
+      addOceanJourney(rand, group, dark);
+      return;
+    }
+    if (SCENE_MODE === 'psychedelic') {
+      addPsychedelicJourney(rand, group);
+      return;
+    }
+    pickMotif(rand, group, dark);
+  }
+
+  const groups = [];
+  for (let i = 0; i < TOTAL; i++) {
+    const group = new THREE.Group();
+    group.position.z = sceneZ(i) - 7;
+    const rand = mulberry32(hashString(SLIDE_TITLES[i] + '#viz' + i));
+    const darkSlide = isDarkSlide(i);
+    buildSceneForMode(rand, group, darkSlide);
+    const images = imageBySlide.get(i) || [];
+    for (let j = 0; j < images.length; j++) {
+      addImagePlane(group, images[j], darkSlide, j);
+    }
+    scene.add(group);
+    groups.push(group);
+  }
+
+  const clock = new THREE.Clock();
+  const tmpVec = new THREE.Vector3();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    cam.position.z += (targetZ - cam.position.z) * 0.062;
+
+    if (wasdKeys['a']) camTargetX = Math.max(-4.5, camTargetX - 0.07);
+    if (wasdKeys['d']) camTargetX = Math.min(4.5, camTargetX + 0.07);
+    if (!wasdKeys['a'] && !wasdKeys['d']) camTargetX *= 0.90;
+    cam.position.x += (camTargetX - cam.position.x) * 0.08;
+
+    for (let gi = 0; gi < groups.length; gi++) {
+      const group = groups[gi];
+      for (let ci = 0; ci < group.children.length; ci++) {
+        const mesh = group.children[ci];
+        const d = mesh.userData || {};
+
+        if (d.ry) mesh.rotation.y += d.ry;
+        if (d.rx) mesh.rotation.x += d.rx;
+        if (d.rz) mesh.rotation.z += d.rz;
+
+        if (d.drift) {
+          mesh.position.x += Math.sin(t * d.sp + d.ph) * 0.002;
+          mesh.position.y += Math.cos(t * d.sp * 0.7 + d.ph) * 0.0015;
+        }
+
+        if (d.wave) {
+          mesh.position.z = -2.2 + Math.sin(t * d.k + d.ph) * 0.5;
+        }
+
+        if (d.roadStripe) {
+          mesh.position.z += Math.sin(t * 0.75) * 0.0012;
+        }
+
+        if (d.roadWave) {
+          const geo = mesh.geometry;
+          const pos = geo.attributes.position;
+          for (let i = 0; i < pos.count; i++) {
+            tmpVec.fromBufferAttribute(pos, i);
+            const z = Math.sin(tmpVec.x * 0.4 + t * d.speed + d.seed) * d.amp;
+            pos.setZ(i, z);
+          }
+          pos.needsUpdate = true;
+        }
+
+        if (d.oceanWave) {
+          const geo = mesh.geometry;
+          const pos = geo.attributes.position;
+          for (let i = 0; i < pos.count; i++) {
+            tmpVec.fromBufferAttribute(pos, i);
+            const z = Math.sin(tmpVec.x * 0.55 + t * d.speed + d.seed) * d.amp +
+                      Math.cos(tmpVec.y * 0.45 - t * d.speed * 0.7 + d.seed) * d.amp * 0.6;
+            pos.setZ(i, z);
+          }
+          pos.needsUpdate = true;
+        }
+
+        if (d.landscape) {
+          const geo = mesh.geometry;
+          const pos = geo.attributes.position;
+          for (let i = 0; i < pos.count; i++) {
+            tmpVec.fromBufferAttribute(pos, i);
+            const z = Math.sin(tmpVec.x * 0.85 + t * d.speed + d.seed) * d.amp +
+                      Math.cos(tmpVec.y * 0.75 - t * d.speed * 0.8 + d.seed) * d.amp * 0.7;
+            pos.setZ(i, z);
+          }
+          pos.needsUpdate = true;
+          geo.computeVertexNormals();
+        }
+
+        if (d.imageFloat) {
+          mesh.position.y = d.baseY + Math.sin(t * 0.75 + d.ph) * 0.06;
+        }
+
+        if (d.sailBoat) {
+          mesh.position.y = -1.8 + Math.sin(t * 1.2 + d.ph) * 0.08;
+          mesh.rotation.y = Math.sin(t * 0.8 + d.ph) * 0.28;
+        }
+
+        if (d.psychoHue && mesh.material && mesh.material.color) {
+          const h = (t * 0.09 + d.ph * 0.15) % 1;
+          mesh.material.color.setHSL(h, 0.9, 0.62);
+        }
+      }
+    }
+
+    if (window.__liveGlslUpdate) window.__liveGlslUpdate(t);
+    renderer.render(scene, cam);
+  }
+
+  syncTheme();
+  animate();
+
+  // ── Audio system ─────────────────────────────────────────────────────────
+  let audioCtx = null;
+  let masterGain = null;
+  let modeGain = null;
+  let ambiGain = null;
+  let modeNodes = [];
+  let audioReady = false;
+  let isMuted = localStorage.getItem('md3d_muted') === 'true';
+  const muteBtn = document.getElementById('mute-btn');
+  const muteIconOn = document.getElementById('mute-icon-on');
+  const muteIconOff = document.getElementById('mute-icon-off');
+
+  function updateMuteButton() {
+    if (!muteBtn) return;
+    muteBtn.classList.toggle('active', !isMuted);
+    if (muteIconOn)  muteIconOn.style.display  = isMuted ? 'none' : '';
+    if (muteIconOff) muteIconOff.style.display = isMuted ? '' : 'none';
+  }
+  updateMuteButton();
+
+  function initAudio() {
+    if (audioReady) return;
+    audioReady = true;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx.resume();
+
+      const comp = audioCtx.createDynamicsCompressor();
+      comp.threshold.value = -20;
+      comp.knee.value = 10;
+      comp.ratio.value = 6;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.15;
+      comp.connect(audioCtx.destination);
+
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0;
+      masterGain.connect(comp);
+      if (!isMuted) {
+        masterGain.gain.linearRampToValueAtTime(0.22, audioCtx.currentTime + 3.0);
+      }
+
+      modeGain = audioCtx.createGain();
+      modeGain.gain.value = 1;
+      modeGain.connect(masterGain);
+
+      ambiGain = audioCtx.createGain();
+      ambiGain.gain.value = 0.65;  // centre of breath swing
+      ambiGain.connect(modeGain);
+
+      buildModeAudio();
+    } catch (e) {
+      audioReady = false;
+    }
+  }
+
+  function toggleMute() {
+    if (!audioReady) initAudio();
+    isMuted = !isMuted;
+    localStorage.setItem('md3d_muted', isMuted);
+    if (masterGain) {
+      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      masterGain.gain.setTargetAtTime(isMuted ? 0 : 0.22, audioCtx.currentTime, 0.25);
+    }
+    updateMuteButton();
+  }
+  if (muteBtn) muteBtn.onclick = toggleMute;
+
+  function makeNoiseSource() {
+    const len = Math.floor(audioCtx.sampleRate * 3);
+    const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    return src;
+  }
+
+  function makeLFO(freq, type = 'sine') {
+    const lfo = audioCtx.createOscillator();
+    lfo.type = type;
+    lfo.frequency.value = freq;
+    lfo.start();
+    modeNodes.push(lfo);
+    return lfo;
+  }
+
+  function makeOsc(freq, type = 'sine') {
+    const osc = audioCtx.createOscillator();
+    osc.type = type;
+    osc.frequency.value = freq;
+    osc.start();
+    modeNodes.push(osc);
+    return osc;
+  }
+
+  function makeGain(val) {
+    const g = audioCtx.createGain();
+    g.gain.value = val;
+    return g;
+  }
+
+  function buildModeAudio() {
+    modeNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    modeNodes = [];
+
+    if (SCENE_MODE === 'ocean')       buildOceanAudio();
+    else if (SCENE_MODE === 'road')   buildRoadAudio();
+    else if (SCENE_MODE === 'tunnel') buildTunnelAudio();
+    else if (SCENE_MODE === 'psychedelic') buildPsychedelicAudio();
+    else buildDefaultAudio();
+
+    // Breathing LFO: 10 s period, swings ambiGain from ~0.3 up to ~1.0
+    const breathLFO = audioCtx.createOscillator();
+    breathLFO.type = 'sine';
+    breathLFO.frequency.value = 0.1;
+    const breathDepth = audioCtx.createGain();
+    breathDepth.gain.value = 0.35;
+    breathLFO.connect(breathDepth);
+    breathDepth.connect(ambiGain.gain);
+    breathLFO.start();
+    modeNodes.push(breathLFO);
+  }
+
+  function buildOceanAudio() {
+    // Filtered noise → waves
+    const noise = makeNoiseSource();
+    const waveFilter = audioCtx.createBiquadFilter();
+    waveFilter.type = 'bandpass';
+    waveFilter.frequency.value = 120;
+    waveFilter.Q.value = 0.55;
+
+    const lfoDepth = makeGain(40);
+    makeLFO(0.11).connect(lfoDepth);
+    lfoDepth.connect(waveFilter.frequency);
+
+    noise.connect(waveFilter);
+    waveFilter.connect(makeGain(0.55)).connect(ambiGain);
+    noise.start();
+    modeNodes.push(noise);
+
+    // Deep sub
+    makeOsc(110).connect(makeGain(0.15)).connect(ambiGain);
+  }
+
+  function buildRoadAudio() {
+    // Low rumble
+    const rumble = makeNoiseSource();
+    const rumbleF = audioCtx.createBiquadFilter();
+    rumbleF.type = 'lowpass';
+    rumbleF.frequency.value = 110;
+    rumble.connect(rumbleF);
+    rumbleF.connect(makeGain(0.5)).connect(ambiGain);
+    rumble.start();
+    modeNodes.push(rumble);
+
+    // Wind
+    const wind = makeNoiseSource();
+    const windF = audioCtx.createBiquadFilter();
+    windF.type = 'bandpass';
+    windF.frequency.value = 420;
+    windF.Q.value = 0.9;
+    const gustDepth = makeGain(0.18);
+    makeLFO(0.04).connect(gustDepth);
+    gustDepth.connect(makeGain(1).gain);  // modulate wind amplitude
+    wind.connect(windF);
+    windF.connect(makeGain(0.22)).connect(ambiGain);
+    wind.start();
+    modeNodes.push(wind);
+  }
+
+  function buildTunnelAudio() {
+    // Resonant drone
+    const osc = makeOsc(110, 'sawtooth');
+    const res = audioCtx.createBiquadFilter();
+    res.type = 'bandpass';
+    res.frequency.value = 220;
+    res.Q.value = 10;
+
+    const lfoDepth = makeGain(18);
+    makeLFO(0.07).connect(lfoDepth);
+    lfoDepth.connect(res.frequency);
+
+    osc.connect(res);
+    const oscOut = makeGain(0.38);
+    res.connect(oscOut);
+    oscOut.connect(ambiGain);
+
+    // Feedback delay → cave reverb feel
+    const delay = audioCtx.createDelay(0.6);
+    delay.delayTime.value = 0.22;
+    const fb = makeGain(0.38);
+    oscOut.connect(delay);
+    delay.connect(fb);
+    fb.connect(delay);
+    fb.connect(makeGain(0.3)).connect(ambiGain);
+  }
+
+  function buildPsychedelicAudio() {
+    // FM synthesis
+    const carrier = makeOsc(110, 'sine');
+    const mod = makeOsc(220, 'sine');
+    const modDepth = makeGain(85);
+    // Slowly drift modulation ratio
+    const driftDepth = makeGain(55);
+    makeLFO(0.06).connect(driftDepth);
+    driftDepth.connect(mod.frequency);
+
+    mod.connect(modDepth);
+    modDepth.connect(carrier.frequency);
+    carrier.connect(makeGain(0.35)).connect(ambiGain);
+  }
+
+  function buildDefaultAudio() {
+    // Pentatonic drone tuned to deck's title hash
+    const scale = [82.4, 98.0, 110.0, 130.8, 146.8]; // E2 G2 A2 C3 D3
+    const base = scale[hashString(SLIDE_TITLES[0]) % scale.length];
+
+    const osc = makeOsc(base, 'sine');
+    const osc2 = makeOsc(base * 1.5, 'sine');  // perfect fifth, stays in 124–220 Hz
+
+    // Slow vibrato
+    const vibDepth = makeGain(1.4);
+    makeLFO(0.14).connect(vibDepth);
+    vibDepth.connect(osc.frequency);
+
+    const mix = makeGain(0.45);
+    osc.connect(mix);
+    osc2.connect(makeGain(0.22)).connect(mix);
+    mix.connect(ambiGain);
+  }
+
+  // Slide-transition whoosh (tunnel only)
+  function playWhoosh() {
+    if (!audioCtx || isMuted) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(190, now);
+    osc.frequency.exponentialRampToValueAtTime(68, now + 0.55);
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.16, now + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(now);
+    osc.stop(now + 0.7);
+  }
+
+  function onSlideChange() {
+    if (!audioReady) return;
+    if (SCENE_MODE === 'tunnel') playWhoosh();
+    const now = audioCtx.currentTime;
+    modeGain.gain.cancelScheduledValues(now);
+    modeGain.gain.setValueAtTime(modeGain.gain.value, now);
+    modeGain.gain.linearRampToValueAtTime(0.08, now + 0.5);
+    modeGain.gain.linearRampToValueAtTime(1.0, now + 2.2);
+  }
+
+  // Web Speech API narration
+  function speakNarration(slideIndex) {
+    const text = SLIDE_NARRATION[slideIndex];
+    if (!text || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.rate = 0.92;
+    utt.pitch = 1.0;
+    window.speechSynthesis.speak(utt);
+  }
+
+  // Initialise audio on first real user gesture
+  document.addEventListener('click', initAudio, { once: true });
+  document.addEventListener('keydown', initAudio, { once: true });
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Live coding panel ────────────────────────────────────────────────────
+  const liveGroups = new Map();   // slideIndex → THREE.Group for live objects
+  const glslMeshes = new Map();   // slideIndex → {mesh, mat}
+  let cmEditor = null;
+  let liveCurrentSlide = -1;
+  let liveCurrentTab = 0;
+  let liveCollapsed = false;
+  let pyodideReady = false;
+  let pyodideLoading = false;
+  let pyodideInstance = null;
+
+  const livePanel = document.getElementById('live-panel');
+  const liveTabsEl = document.getElementById('live-tabs');
+  const liveEditorMount = document.getElementById('live-editor-mount');
+  const liveErrorEl = document.getElementById('live-error');
+  const liveOutputEl = document.getElementById('live-output');
+  const liveLangBadge = document.getElementById('live-lang-badge');
+  const liveCollapseBtn = document.getElementById('live-collapse-btn');
+
+  function getLiveGroup(slideIndex) {
+    if (!liveGroups.has(slideIndex)) {
+      const lg = new THREE.Group();
+      lg.position.z = sceneZ(slideIndex) - 7;
+      scene.add(lg);
+      liveGroups.set(slideIndex, lg);
+    }
+    return liveGroups.get(slideIndex);
+  }
+
+  function clearLiveGroup(slideIndex) {
+    const lg = liveGroups.get(slideIndex);
+    if (!lg) return;
+    while (lg.children.length > 0) {
+      const child = lg.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+      lg.remove(child);
+    }
+    glslMeshes.delete(slideIndex);
+  }
+
+  function setLiveError(msg) {
+    if (!liveErrorEl) return;
+    liveErrorEl.textContent = msg;
+  }
+
+  function setLiveOutput(msg) {
+    if (!liveOutputEl) return;
+    liveOutputEl.textContent = msg;
+  }
+
+  function runJS(code, slideIndex) {
+    setLiveError('');
+    setLiveOutput('');
+    const liveGroup = getLiveGroup(slideIndex);
+    clearLiveGroup(slideIndex);
+    const outputLines = [];
+    try {
+      const fn = new Function(
+        'THREE', 'group', 'scene', 'camera', 'renderer', 'print',
+        '"use strict";\n' + code
+      );
+      fn(
+        THREE,
+        liveGroup,
+        scene,
+        cam,
+        renderer,
+        (...args) => outputLines.push(args.map(String).join(' '))
+      );
+      if (outputLines.length) setLiveOutput(outputLines.join('\n'));
+    } catch (e) {
+      setLiveError(e.message);
+    }
+  }
+
+  // Default GLSL vertex and starter fragment shaders
+  const GLSL_VERT = `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`.trim();
+
+  const GLSL_DEFAULT_FRAG = `
+uniform float u_time;
+uniform vec2 u_resolution;
+varying vec2 vUv;
+
+void main() {
+  vec2 uv = vUv;
+  vec3 col = 0.5 + 0.5 * cos(u_time + uv.xyx + vec3(0.0, 2.0, 4.0));
+  gl_FragColor = vec4(col, 1.0);
+}`.trim();
+
+  function runGLSL(frag, slideIndex) {
+    setLiveError('');
+    setLiveOutput('');
+    try {
+      if (glslMeshes.has(slideIndex)) {
+        const { mat } = glslMeshes.get(slideIndex);
+        mat.fragmentShader = frag;
+        mat.needsUpdate = true;
+        return;
+      }
+      const liveGroup = getLiveGroup(slideIndex);
+      clearLiveGroup(slideIndex);
+      const mat = new THREE.ShaderMaterial({
+        vertexShader: GLSL_VERT,
+        fragmentShader: frag,
+        uniforms: {
+          u_time: { value: 0 },
+          u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        },
+      });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(9, 6), mat);
+      mesh.userData.glslShader = true;
+      liveGroup.add(mesh);
+      glslMeshes.set(slideIndex, { mesh, mat });
+    } catch (e) {
+      setLiveError(e.message);
+    }
+  }
+
+  function runPython(code, slideIndex) {
+    setLiveError('');
+    setLiveOutput('');
+    if (!pyodideReady) {
+      if (!pyodideLoading) initPyodide(code, slideIndex);
+      else setLiveOutput('Python runtime loading…');
+      return;
+    }
+    const liveGroup = getLiveGroup(slideIndex);
+    clearLiveGroup(slideIndex);
+    const outputLines = [];
+
+    // Expose bridge on window so Python can reach it via `import js`
+    // (pyodideInstance.globals maps to Python globals, not window)
+    window._md3d_clear  = () => clearLiveGroup(slideIndex);
+    window._md3d_print  = (msg) => outputLines.push(String(msg));
+    window._md3d_box    = (x, y, z, size, color) => {
+      const m = new THREE.Mesh(
+        new THREE.BoxGeometry(size, size, size),
+        new THREE.MeshBasicMaterial({ color: color || 0x5dfdcb, wireframe: true, transparent: true, opacity: 0.7 })
+      );
+      m.position.set(x, y, z);
+      liveGroup.add(m);
+    };
+    window._md3d_sphere = (x, y, z, r, color) => {
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(r || 0.5, 12, 8),
+        new THREE.MeshBasicMaterial({ color: color || 0x5dfdcb, wireframe: true, transparent: true, opacity: 0.7 })
+      );
+      m.position.set(x, y, z);
+      liveGroup.add(m);
+    };
+    window._md3d_points = (ptsJson, color) => {
+      JSON.parse(ptsJson).forEach(([x, y, z]) => {
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(0.06, 6, 4),
+          new THREE.MeshBasicMaterial({ color: color || 0x5dfdcb })
+        );
+        m.position.set(x, y, z);
+        liveGroup.add(m);
+      });
+    };
+    window._md3d_line   = (ptsJson, color) => {
+      const flat = [];
+      JSON.parse(ptsJson).forEach(([x, y, z]) => flat.push(x, y, z));
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(flat, 3));
+      liveGroup.add(new THREE.Line(geom, new THREE.LineBasicMaterial({ color: color || 0x5dfdcb })));
+    };
+
+    const setup = `
+import js as _js, json as _json
+class _Three:
+    def clear(self): _js._md3d_clear()
+    def box(self, x=0, y=0, z=0, size=1, color=None): _js._md3d_box(x, y, z, size, color)
+    def sphere(self, x=0, y=0, z=0, radius=0.5, color=None): _js._md3d_sphere(x, y, z, radius, color)
+    def points(self, pts, color=None): _js._md3d_points(_json.dumps(pts), color)
+    def line(self, pts, color=None): _js._md3d_line(_json.dumps(pts), color)
+    def plot(self, pts, color=None): self.points(pts, color)
+three = _Three()
+def print(*a, **kw): _js._md3d_print(' '.join(str(x) for x in a))
+`;
+    try {
+      pyodideInstance.runPython(setup + '\n' + code);
+      if (outputLines.length) setLiveOutput(outputLines.join('\n'));
+    } catch (e) {
+      setLiveError(String(e));
+    }
+  }
+
+  function initPyodide(pendingCode, slideIndex) {
+    pyodideLoading = true;
+    setLiveOutput('Loading Python runtime (~8 MB)…');
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+    s.onerror = () => {
+      setLiveError('Failed to load Pyodide script from CDN.');
+      pyodideLoading = false;
+    };
+    s.onload = () => {
+      window.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/' })
+        .then(py => {
+          pyodideInstance = py;
+          pyodideReady = true;
+          pyodideLoading = false;
+          setLiveOutput('');
+          if (pendingCode) runPython(pendingCode, slideIndex);
+        }).catch(e => {
+          setLiveError('Pyodide failed to initialise: ' + e.message);
+          pyodideLoading = false;
+        });
+    };
+    document.head.appendChild(s);
+  }
+
+  function debounce(fn, delay) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+  }
+
+  function cmModeForLang(lang) {
+    if (lang === 'glsl') return 'text/x-glsl';
+    if (lang === 'python') return 'python';
+    return 'javascript';
+  }
+
+  function initLivePanel() {
+    if (!livePanel || typeof CodeMirror === 'undefined') return;
+    cmEditor = CodeMirror(liveEditorMount, {
+      value: '',
+      mode: 'javascript',
+      lineNumbers: true,
+      matchBrackets: true,
+      indentUnit: 2,
+      tabSize: 2,
+      indentWithTabs: false,
+      lineWrapping: false,
+      extraKeys: { Tab: cm => cm.execCommand('indentMore') },
+    });
+    cmEditor.on('focus', () => { cmFocused = true; });
+    cmEditor.on('blur',  () => { cmFocused = false; });
+    cmEditor.on('change', debounce(() => {
+      if (liveCurrentSlide < 0 || liveCollapsed) return;
+      runCurrentBlock();
+    }, 400));
+
+    if (liveCollapseBtn) {
+      liveCollapseBtn.onclick = () => {
+        liveCollapsed = !liveCollapsed;
+        livePanel.classList.toggle('collapsed', liveCollapsed);
+        const svg = liveCollapseBtn.querySelector('svg path');
+        if (svg) svg.setAttribute('d', liveCollapsed ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6');
+      };
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'e' || e.key === 'E') && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        if (livePanel && livePanel.classList.contains('visible')) {
+          liveCollapsed = !liveCollapsed;
+          livePanel.classList.toggle('collapsed', liveCollapsed);
+        }
+      }
+    });
+
+    syncLivePanel(0);
+  }
+
+  function runCurrentBlock() {
+    const blocks = SLIDE_LIVECODE[liveCurrentSlide] || [];
+    if (!blocks.length) return;
+    const block = blocks[liveCurrentTab] || blocks[0];
+    const code = cmEditor ? cmEditor.getValue() : block.code;
+    const lang = block.lang;
+    if (lang === 'glsl') runGLSL(code, liveCurrentSlide);
+    else if (lang === 'python') runPython(code, liveCurrentSlide);
+    else runJS(code, liveCurrentSlide);
+  }
+
+  function syncLivePanel(slideIndex) {
+    if (!livePanel) return;
+    const blocks = SLIDE_LIVECODE[slideIndex] || [];
+
+    if (!blocks.length) {
+      livePanel.classList.remove('visible');
+      document.body.classList.remove('live-open');
+      liveCurrentSlide = -1;
+      return;
+    }
+
+    liveCurrentSlide = slideIndex;
+    liveCurrentTab = Math.min(liveCurrentTab, blocks.length - 1);
+    livePanel.classList.add('visible');
+    document.body.classList.add('live-open');
+
+    // Build tabs if multiple blocks
+    if (liveTabsEl) {
+      liveTabsEl.innerHTML = '';
+      if (blocks.length > 1) {
+        blocks.forEach((b, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'live-tab' + (i === liveCurrentTab ? ' active' : '');
+          btn.textContent = (i + 1) + '. ' + b.lang;
+          btn.onclick = () => {
+            liveCurrentTab = i;
+            loadBlock(blocks[i]);
+            liveTabsEl.querySelectorAll('.live-tab').forEach((t, j) => t.classList.toggle('active', j === i));
+          };
+          liveTabsEl.appendChild(btn);
+        });
+      }
+    }
+
+    loadBlock(blocks[liveCurrentTab]);
+  }
+
+  function loadBlock(block) {
+    if (!cmEditor) return;
+    if (liveLangBadge) liveLangBadge.textContent = block.lang;
+    cmEditor.setOption('mode', cmModeForLang(block.lang));
+    cmEditor.setValue(block.code);
+    cmEditor.refresh();
+    setLiveError('');
+    setLiveOutput('');
+    // Run immediately when loading a new slide
+    if (block.lang === 'glsl') runGLSL(block.code, liveCurrentSlide);
+    else if (block.lang === 'python') runPython(block.code, liveCurrentSlide);
+    else runJS(block.code, liveCurrentSlide);
+  }
+
+  // Update GLSL time uniforms in the animate loop
+  const _origAnimate = animate;
+  (function patchAnimate() {
+    const clock2 = new THREE.Clock();
+    const _animLoop = animate;
+    // Patch: the animate function already runs via requestAnimationFrame.
+    // We piggyback GLSL uniform updates onto the per-frame logic instead.
+  })();
+
+  // Hook GLSL uniform updates into the existing animate loop
+  // by storing the patch in a sentinel checked each frame.
+  window.__liveGlslUpdate = function(t) {
+    glslMeshes.forEach(({ mat }) => {
+      if (mat.uniforms && mat.uniforms.u_time) {
+        mat.uniforms.u_time.value = t;
+        mat.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+      }
+    });
+  };
+
+  initLivePanel();
+  // ────────────────────────────────────────────────────────────────────────
+})();
+</script>
+</body>
+</html>
