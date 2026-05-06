@@ -8,7 +8,7 @@ Mick Grierson — Creative Computing Institute, UAL
 
 ---
 
-## Slide 1 — Title
+## Slide 1 — Practice as Research
 
 **Choosing and Designing Methods**
 Lecture 4 of 8 — Practice as Research
@@ -64,7 +64,7 @@ There is no single correct method for any project. There are better and worse fi
 
 ## Slide 5 — Haseman's three paradigms
 
-Haseman (2006) argues that practice-led research doesn't fit neatly into the two established paradigms:
+Haseman (2006) argues that practice-led research doesn't fit neatly into the two established paradigms (Haseman, B. (2006). A Manifesto for Performative Research. Media International Australia, 118(1), 98-106.):
 
 **Quantitative** — hypothesis testing, controlled variables, statistical analysis. Produces numerical data. Answers "how much" and "how often."
 
