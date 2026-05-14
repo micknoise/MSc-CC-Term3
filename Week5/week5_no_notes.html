@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSc Creative Computing</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@300;400&display=swap');
+
+  :root {
+    --fg: #111;
+    --fg-dim: rgba(17,17,17,0.35);
+    --fg-mid: rgba(17,17,17,0.58);
+    --bg: #fbfbfb;
+    --nav-bg: rgba(251,251,251,0.88);
+    --font-head: 'DM Sans', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --highlight-bg: rgba(255,255,255,0.86);
+  }
+
+  body.tone-dark {
+    --fg: #f3f3f3;
+    --fg-dim: rgba(243,243,243,0.4);
+    --fg-mid: rgba(243,243,243,0.72);
+    --bg: #0d0d0d;
+    --nav-bg: rgba(13,13,13,0.8);
+    --highlight-bg: rgba(0,0,0,0.78);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+  body { transition: background 0.8s ease; }
+
+  #bg-canvas {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+  }
+
+  #slides-layer {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 10; pointer-events: none;
+  }
+
+  .slide {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 56px 12% 88px;
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.75s cubic-bezier(0.33,1,0.68,1), transform 0.75s cubic-bezier(0.33,1,0.68,1);
+    pointer-events: none;
+  }
+
+  .slide.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .slide .inner { max-width: 760px; width: 100%; }
+
+  .slide h1 {
+    font-family: var(--font-head); font-weight: 200; font-size: clamp(32px, 5vw, 50px);
+    line-height: 1.12; letter-spacing: -0.8px; color: var(--fg); margin-bottom: 14px;
+  }
+
+  .slide h2 {
+    font-family: var(--font-head); font-weight: 300; font-size: clamp(22px, 3.2vw, 34px);
+    line-height: 1.2; letter-spacing: -0.4px; color: var(--fg); margin-bottom: 16px;
+  }
+
+  .slide p {
+    font-family: var(--font-body); font-weight: 300; font-size: clamp(13px, 1.6vw, 17px);
+    line-height: 1.7; color: var(--fg); margin-bottom: 10px;
+  }
+
+  .slide p.mid { color: var(--fg-mid); }
+  .slide p.subtitle {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.6px;
+    color: var(--fg-dim); text-transform: uppercase;
+  }
+
+  .slide a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  .slide .em { font-weight: 700; }
+  .slide .it { font-style: italic; }
+
+  .numbered, .bulleted { margin: 8px 0 6px; }
+  .numbered { counter-reset: item; }
+  .numbered p::before {
+    counter-increment: item;
+    content: counter(item) '.';
+    font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim);
+    margin-right: 8px;
+  }
+
+  .bulleted p::before {
+    content: '•';
+    font-family: var(--font-mono); font-size: 12px; color: var(--fg-dim);
+    margin-right: 8px;
+  }
+
+  #nav {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    z-index: 100; display: flex; align-items: center; gap: 18px;
+    background: var(--nav-bg); backdrop-filter: blur(16px);
+    border: 1px solid rgba(0,0,0,0.08); border-radius: 40px;
+    padding: 8px 22px; pointer-events: auto; user-select: none;
+    transition: background 0.6s ease;
+  }
+
+  #nav button {
+    background: none; border: none; cursor: pointer; color: var(--fg);
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #nav button:hover { background: rgba(127,127,127,0.18); }
+  #nav button svg { width: 16px; height: 16px; }
+
+  #counter {
+    font-family: var(--font-mono); font-size: 12px; color: var(--fg-mid);
+    min-width: 58px; text-align: center;
+  }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 1.5px;
+    background: var(--fg); z-index: 100;
+    transition: width 0.7s cubic-bezier(0.33,1,0.68,1), background 0.6s ease;
+  }
+
+  #topbar {
+    position: fixed; top: 18px; left: 24px; z-index: 100;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.8px;
+    text-transform: uppercase; color: var(--fg-dim);
+  }
+
+  @media (max-width: 820px) {
+    .slide { padding: 44px 9% 92px; }
+    .slide p { font-size: 14px; line-height: 1.6; }
+    #topbar { left: 16px; top: 14px; }
+  }
+
+  /* Reading-mode highlight */
+  body.reading-mode .slide.active .inner {
+    background: var(--highlight-bg);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    border-radius: 6px;
+    padding: 18px 24px;
+    transition: background 0.35s ease;
+  }
+
+  /* Geometry / highlight / notes nav buttons */
+  #highlight-btn, #geom-btn, #notes-btn { opacity: 0.42; transition: opacity 0.2s ease; }
+  #highlight-btn.active, #geom-btn.active, #notes-btn.active { opacity: 1; }
+  #nav-sep { width: 1px; height: 18px; background: rgba(127,127,127,0.22); margin: 0 2px; }
+
+  /* ── Live coding panel ─────────────────────────────────────────────── */
+  #live-panel {
+    position: fixed; right: 0; top: 0; width: 44%; height: 100%; z-index: 20;
+    display: flex; flex-direction: column;
+    background: rgba(10,10,14,0.94); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border-left: 1px solid rgba(255,255,255,0.07);
+    transform: translateX(100%);
+    transition: transform 0.45s cubic-bezier(0.33,1,0.68,1);
+    pointer-events: none;
+  }
+  #live-panel.visible { transform: translateX(0); pointer-events: auto; }
+  #live-panel.collapsed { transform: translateX(calc(100% - 38px)); }
+
+  #live-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px 10px 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.07); flex-shrink: 0;
+  }
+  #live-lang-badge {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px;
+    text-transform: uppercase; color: #5dfdcb;
+    background: rgba(93,253,203,0.1); border-radius: 4px; padding: 2px 7px;
+  }
+  #live-title {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px;
+    text-transform: uppercase; color: rgba(255,255,255,0.35); flex: 1;
+  }
+  #live-collapse-btn {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.35); padding: 4px;
+    display: flex; align-items: center; border-radius: 4px; transition: color 0.15s;
+  }
+  #live-collapse-btn:hover { color: rgba(255,255,255,0.8); }
+  #live-collapse-btn svg { width: 14px; height: 14px; }
+
+  #live-tabs {
+    display: flex; gap: 2px; padding: 6px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0;
+  }
+  .live-tab {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.4); padding: 3px 10px; border-radius: 4px;
+    background: none; border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
+  }
+  .live-tab:hover { color: rgba(255,255,255,0.7); }
+  .live-tab.active { color: #fff; border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); }
+  #live-tabs:empty { display: none; }
+
+  #live-editor-mount { flex: 1; overflow: hidden; display: flex; flex-direction: column; min-height: 0; }
+  #live-editor-mount .CodeMirror {
+    flex: 1; height: 100%; font-size: 12.5px; line-height: 1.65;
+    font-family: var(--font-mono); background: transparent !important; color: #e2e8f0;
+  }
+  #live-editor-mount .CodeMirror-scroll { height: 100%; }
+  .CodeMirror-gutters { background: rgba(0,0,0,0.3) !important; border-right: 1px solid rgba(255,255,255,0.06) !important; }
+  .CodeMirror-linenumber { color: rgba(255,255,255,0.2) !important; }
+  .CodeMirror-cursor { border-left-color: #5dfdcb !important; }
+  .CodeMirror-selected { background: rgba(93,253,203,0.1) !important; }
+  .cm-s-default .cm-keyword { color: #c792ea; }
+  .cm-s-default .cm-def { color: #82aaff; }
+  .cm-s-default .cm-variable { color: #e2e8f0; }
+  .cm-s-default .cm-string { color: #c3e88d; }
+  .cm-s-default .cm-number { color: #f78c6c; }
+  .cm-s-default .cm-comment { color: rgba(255,255,255,0.3); font-style: italic; }
+  .cm-s-default .cm-operator { color: #89ddff; }
+  .cm-s-default .cm-builtin { color: #ffcb6b; }
+  .cm-s-default .cm-atom { color: #f78c6c; }
+  .cm-s-default .cm-type { color: #c792ea; }
+
+  #live-error {
+    font-family: var(--font-mono); font-size: 11px; color: #ff5e5b;
+    padding: 6px 16px; flex-shrink: 0;
+    background: rgba(255,94,91,0.07); display: none;
+  }
+  #live-error:not(:empty) { display: block; }
+  #live-output {
+    font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,0.4);
+    padding: 6px 16px; flex-shrink: 0; display: none;
+  }
+  #live-output:not(:empty) { display: block; }
+
+  body.live-open .slide.has-live.active .inner {
+    transform: translateX(-18%);
+    transition: transform 0.45s cubic-bezier(0.33,1,0.68,1);
+  }
+
+  @media (max-width: 900px) {
+    #live-panel {
+      width: 100%; border-left: none; border-top: 1px solid rgba(255,255,255,0.07);
+      top: auto; bottom: 0; height: 46vh; transform: translateY(100%);
+    }
+    #live-panel.visible { transform: translateY(0); }
+    #live-panel.collapsed { transform: translateY(calc(100% - 40px)); }
+    body.live-open .slide.has-live.active .inner { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div id="progress"></div>
+<div id="topbar">Practice as Research — Lecture 5 · Mick Grierson — Creative Computing Institute, UAL</div>
+
+<div id="slides-layer">
+<div class="slide active">
+  <div class="inner">
+    <h1>Title</h1>
+    <p><span class="em">Reflection and Documentation &mdash; Turning Process into Evidence</span></p>
+    <p>Lecture 5 of 8 &mdash; Practice as Research</p>
+    <p>Mick Grierson, <a href="https://www.arts.ac.uk/colleges/creative-computing-institute" target="_blank" rel="noopener noreferrer">Creative Computing Institute</a>, UAL</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Recap: where we are</h2>
+    <p>Week 1: Research = edge + hypothesis + test.</p>
+    <p>Week 2: Practice produces knowledge &mdash; including tacit and experiential knowledge.</p>
+    <p>Week 3: Finding the gap.</p>
+    <p>Week 4: Choosing and designing methods.</p>
+    <p>Today: <span class="em">How do you capture what you learn through making &mdash; and turn it into research evidence?</span></p>
+    <p>Two connected problems:</p>
+    <div class="numbered">
+      <p><span class="em">Reflection</span> &mdash; how do you notice and analyse what&#x27;s happening in your own practice?</p>
+      <p><span class="em">Documentation</span> &mdash; how do you record it so that it becomes communicable to others?</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Why reflection matters</h2>
+    <p>In Lecture 2 we said practice produces <span class="em">tacit</span> and <span class="em">experiential</span> knowledge &mdash; knowledge that resists full verbalisation.</p>
+    <p>The problem: if it resists verbalisation, how do you include it in a research submission?</p>
+    <p>The answer is not &quot;make it fully propositional.&quot; Some knowledge will remain partially tacit &mdash; and that&#x27;s fine. The answer is: <span class="em">reflect on your practice carefully enough that you can articulate as much as possible, and point to the artefact for the rest.</span></p>
+    <p>Reflection is the bridge between doing and knowing. It is what turns &quot;I made a thing&quot; into &quot;here is what making the thing revealed.&quot;</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Schön: the reflective practitioner</h2>
+    <p>Donald Schön (1983) identified two modes of reflection that professionals use:</p>
+    <p><span class="em">Reflection-in-action</span> &mdash; thinking <span class="it">while</span> you&#x27;re doing. The moment you hear your generative system produce an unexpected timbre and you adjust the parameters in response &mdash; that&#x27;s reflection-in-action. You&#x27;re reading the situation and responding to it in real time.</p>
+    <p><span class="em">Reflection-on-action</span> &mdash; thinking <span class="it">after</span> you&#x27;ve done something. You step back from the session, look at what happened, and ask: what worked, what didn&#x27;t, what surprised me, what does this mean for the next iteration?</p>
+    <p>Both are research activities, but only the second one reliably produces <span class="it">records</span>. The challenge is capturing reflection-in-action before it fades &mdash; because in-the-moment insights are often the most valuable and the most perishable.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Reflection is not description</h2>
+    <p>There is a crucial difference between describing what you did and reflecting on it.</p>
+    <p><span class="em">Description:</span> &quot;I trained the model for 200 epochs on the vocal dataset.&quot;</p>
+    <p><span class="em">Reflection:</span> &quot;I trained the model for 200 epochs on the vocal dataset. At epoch 80, the outputs started producing recognisable vowel shapes but with metallic artefacts. I initially treated this as a training failure, but on listening more carefully I realised the artefacts had a timbral character that was musically interesting &mdash; closer to a processed vocal than a clean one. This changed my framing: instead of aiming for high-fidelity vocal reproduction, I began exploring what the model&#x27;s &#x27;errors&#x27; offered as a distinct sonic palette. The gap in my project shifted from &#x27;can neural networks reproduce voice?&#x27; to &#x27;what happens when they fail to, and is that failure aesthetically productive?&#x27;&quot;</p>
+    <p>The first is a log entry. The second is a research insight.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>A framework for reflective notes</h2>
+    <p>When you sit down to reflect on a session of making, ask yourself four questions:</p>
+    <p><span class="em">What happened?</span> &mdash; Describe the activity. What did you do, build, test, change?</p>
+    <p><span class="em">What surprised you?</span> &mdash; Surprises are where learning lives. Expected outcomes confirm what you already knew. Unexpected outcomes teach you something new.</p>
+    <p><span class="em">What does it mean?</span> &mdash; Interpret the surprise. Why did it happen? What does it reveal about your system, your assumptions, your question?</p>
+    <p><span class="em">What changes?</span> &mdash; How does this affect what you do next? Does it refine your question? Alter your method? Open a new direction?</p>
+    <p>This cycle &mdash; do, notice, interpret, adjust &mdash; is the iterative cyclic web from Lecture 2, operating at the scale of a single work session.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Why documentation matters</h2>
+    <p>Documentation serves three audiences:</p>
+    <p><span class="em">Your future self</span> &mdash; in three months you will not remember why you made that design decision, what that parameter value was, or what the output sounded like before you changed the architecture. Your log is your memory.</p>
+    <p><span class="em">Your examiner</span> &mdash; they weren&#x27;t in the room. They didn&#x27;t hear the output, see the failure, or feel the surprise. Your documentation is their only access to the parts of your research that the final artefact alone doesn&#x27;t convey.</p>
+    <p><span class="em">The field</span> &mdash; if your work is good, other people will want to build on it. They need to know what you did, how you did it, and what you learned. Reproducibility and extendability depend on documentation.</p>
+    <p><a href="https://micknoise.github.io/MSc-CC-Term3/audiences.html" target="_blank" rel="noopener noreferrer">&quot;Audiences&quot;</a></p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>What to document: the five layers</h2>
+    <p>Think of documentation as operating at five layers, from the most granular to the most interpretive:</p>
+    <p><span class="em">1. The artefact itself</span> &mdash; the system, the code, the outputs, the installation, the performance. This is the primary evidence.</p>
+    <p><span class="em">2. Technical specification</span> &mdash; architecture, dependencies, parameters, training data, hardware. Enough detail that someone could, in principle, reproduce or extend your work.</p>
+    <p><span class="em">3. Process record</span> &mdash; what you did, in what order, with what results. Dated, sequential, factual. This is your lab notebook.</p>
+    <p><span class="em">4. Reflective commentary</span> &mdash; the four-question framework from slide 6. What surprised you, what it meant, what changed. This is where tacit knowledge becomes partially explicit.</p>
+    <p><span class="em">5. Critical framing</span> &mdash; how the artefact and the process relate to the research question, the gap, and the field. This is the interpretive layer that turns documentation into argument.</p>
+    <p>Layers 1–3 are <span class="em">records</span>. Layer 4 is <span class="em">reflection</span>. Layer 5 is <span class="em">analysis</span>. You need all five, but they serve different purposes and often live in different places.</p>
+    <p><a href="https://micknoise.github.io/MSc-CC-Term3/five-layers.html" target="_blank" rel="noopener noreferrer">&quot;Five Layers&quot;</a></p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Where documentation lives</h2>
+    <p>Different layers live in different places. Here&#x27;s a practical breakdown:</p>
+    <p><span class="em">Code and system:</span> GitHub or GitLab. Use meaningful commit messages &mdash; they are process documentation for free. Tag significant versions. Write a proper README.</p>
+    <p><span class="em">Process log:</span> A regular document &mdash; Markdown, Notion, a physical notebook, whatever you&#x27;ll actually use. Date every entry. Aim for at least one entry per working session.</p>
+    <p><span class="em">Audio/visual outputs:</span> Timestamped exports. Keep a folder structure that makes sense. Name files meaningfully &mdash; `output_2025-03-14_spectral-loss-v2.wav` not `test7_final_FINAL.wav`.</p>
+    <p><span class="em">Reflective notes:</span> In the process log, or as a separate layer on top of it. Some people prefer a separate reflective journal; others annotate their process log.</p>
+    <p><span class="em">Video and screen recordings:</span> For installations, performances, interactive systems, and anything where the experience is temporal. OBS is free. Record more than you think you need.</p>
+    <p><span class="em">The written submission:</span> Where layers 4 and 5 ultimately live in their polished form.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>The annotated portfolio</h2>
+    <p>Gaver &amp; Bowers (2012) proposed the <span class="em">annotated portfolio</span> as a method for presenting design artefacts as research contributions.</p>
+    <p>The idea: you present a curated selection of artefacts (prototypes, outputs, iterations, experiments) and accompany each with written annotation that explains <span class="em">what it shows, why it matters, and how it relates to the others</span>.</p>
+    <p>The portfolio is not a gallery. It is an <span class="em">argument made through artefacts</span>.</p>
+    <p>Each annotation should address:</p>
+    <div class="bulleted">
+      <p>What is this artefact? (What was it made with, when, in what context?)</p>
+      <p>What does it demonstrate? (What knowledge does it carry?)</p>
+      <p>What design decisions does it embody? (What choices were made, and why?)</p>
+      <p>How does it relate to the other items in the portfolio? (What trajectory or development does the collection reveal?)</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>An annotated portfolio in practice</h2>
+    <p>Imagine you&#x27;re building a system that generates visual patterns from audio input.</p>
+    <p><span class="em">Item 1:</span> Early prototype. Direct amplitude-to-brightness mapping.</p>
+    <p><span class="it">Annotation:</span> &quot;The first mapping was literal &mdash; loud = bright, quiet = dark. The result was visually responsive but uninteresting. It confirmed that direct parameter mapping produces correlation without aesthetic surprise.&quot;</p>
+    <p><span class="em">Item 2:</span> Second prototype. Spectral centroid mapped to colour hue, onset density mapped to pattern complexity.</p>
+    <p><span class="it">Annotation:</span> &quot;By mapping perceptual audio features to visual properties, the system began producing outputs that &#x27;felt&#x27; connected to the sound rather than merely synchronised with it. The distinction between synchronisation and connection became a central concept in the project.&quot;</p>
+    <p><span class="em">Item 3:</span> Final system. Multi-feature mapping with a learned crossmodal embedding.</p>
+    <p><span class="it">Annotation:</span> &quot;The learned embedding produced unexpected cross-modal associations &mdash; certain timbres consistently evoked angular shapes, which aligns with research on sound symbolism (Köhler, 1929; Ramachandran &amp; Hubbard, 2001). The system&#x27;s outputs became evidence for a relationship between audio and visual features that was discovered through making, not predicted by theory.&quot;</p>
+    <p>Three items. Three annotations. A clear trajectory from naive mapping to discovered insight.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Documenting failure</h2>
+    <p>Failures, dead ends, and abandoned directions are <span class="em">research evidence</span>, not embarrassments.</p>
+    <p>If you tried an approach and it didn&#x27;t work, that&#x27;s valuable information &mdash; provided you document <span class="it">why</span> it didn&#x27;t work and <span class="it">what you learned from it</span>.</p>
+    <p>A project that presents only its final, successful outcome looks less rigorous than one that shows: &quot;I tried A, B, and C. A failed because of X. B was partially successful but had limitation Y. C, informed by what I learned from A and B, addressed both X and Y.&quot;</p>
+    <p>The narrative of informed iteration is one of the strongest things you can present in a practice-based submission.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Documenting for different audiences</h2>
+    <p>Not all documentation goes in the final submission. Think of it as concentric rings:</p>
+    <p><span class="em">Inner ring &mdash; for you:</span> The raw process log. Everything. Messy, dated, honest. This is your working memory. It stays in your notebook or your private repo.</p>
+    <p><span class="em">Middle ring &mdash; for the examiner:</span> The curated evidence. Selected log entries, annotated portfolio items, key outputs, the reflective commentary that supports your argument. This goes in the appendices or the body of your submission.</p>
+    <p><span class="em">Outer ring &mdash; for the field:</span> The reproducibility package. Code on GitHub with a README, trained models if shareable, a clear description of the method. This is what lets others build on your work.</p>
+    <p>You write the inner ring first and extract the other two from it. If the inner ring doesn&#x27;t exist, there&#x27;s nothing to extract.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>What &quot;good enough&quot; documentation looks like</h2>
+    <p>You don&#x27;t need a cinematic production diary. You need:</p>
+    <p><span class="em">Process log:</span> One entry per significant working session. 100–300 words. Uses the four-question framework (what happened, what surprised you, what does it mean, what changes). Dated.</p>
+    <p><span class="em">Version-controlled code:</span> With meaningful commit messages. Tagged at significant milestones. A README that explains how to run it, what it does, and what it depends on.</p>
+    <p><span class="em">Timestamped outputs:</span> Audio, images, video &mdash; whatever your system produces. Named sensibly. Kept in chronological order so you can trace the development.</p>
+    <p><span class="em">At least one screen recording or demo video</span> of your system in action. Even if it&#x27;s rough. The examiner needs to see the thing working, not just read about it.</p>
+    <p><span class="em">Reflective notes</span> at key decision points: when you changed direction, when something failed, when something surprised you, when you made a significant design choice.</p>
+    <p>This is not a huge overhead. It&#x27;s 15 minutes of writing per session, plus basic file hygiene.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Documentation and the iterative cyclic web</h2>
+    <p>Smith &amp; Dean&#x27;s iterative cyclic web (Lecture 2) describes a process of making, reflecting, reading, and revising &mdash; repeatedly.</p>
+    <p>Documentation is how you <span class="em">make that cycle visible</span>. Without it, the cycle happens but nobody (including you) can trace it afterwards.</p>
+    <p>Each pass through the cycle should leave a trace:</p>
+    <div class="bulleted">
+      <p><span class="em">Make</span> → outputs, code commits, prototypes.</p>
+      <p><span class="em">Reflect</span> → log entries, reflective notes.</p>
+      <p><span class="em">Read</span> → annotated references, notes on how the reading changed your thinking.</p>
+      <p><span class="em">Revise</span> → updated question, changed parameters, new direction &mdash; documented with a note explaining <span class="it">why</span> you revised.</p>
+    </div>
+    <p>If your documentation lets someone reconstruct the trajectory of your thinking &mdash; from first hunch to final artefact, through all the surprises and pivots &mdash; you have a strong evidential foundation for your submission.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>A worked example: documenting a project in creative computing</h2>
+    <p>Here&#x27;s what good documentation might look like across the life of a 12-week MSc project:</p>
+    <p><span class="em">Weeks 1–3:</span> Process log established. Research question drafted. Literature notes with five-point extraction (from Lecture 3). Gap statement drafted. Early sketches and architectural diagrams.</p>
+    <p><span class="em">Weeks 4–6:</span> First prototype built. Code on GitHub. Initial outputs exported and timestamped. Log entries note first surprises and pivots. Reflective notes at key decision points (&quot;chose spectral loss over waveform loss because…&quot;).</p>
+    <p><span class="em">Weeks 7–9:</span> Second iteration built, informed by reflections on the first. User study conducted (if applicable). Screen recordings and demo videos captured. Annotated portfolio beginning to take shape &mdash; three or four items with annotations.</p>
+    <p><span class="em">Weeks 10–12:</span> Final system documented. Process log reviewed and key entries extracted for the written submission. Annotated portfolio finalised. Reflective commentary written up as part of the methods and discussion sections. README polished. Code tagged as final version.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Common mistakes</h2>
+    <p><span class="em">&quot;I&#x27;ll document later.&quot;</span> You won&#x27;t. Or you will, but you&#x27;ll forget the insights that mattered most. Document as you go.</p>
+    <p><span class="em">&quot;My code is my documentation.&quot;</span> Code is layer 2 (technical specification). It doesn&#x27;t capture why you made the choices you did, what surprised you, or how your understanding changed. You need layers 3, 4, and 5 as well.</p>
+    <p><span class="em">&quot;I documented everything.&quot;</span> If you documented <span class="it">everything</span> equally, you documented nothing usefully. Documentation for the examiner is curated &mdash; you select the moments that matter and explain why they matter.</p>
+    <p><span class="em">&quot;The artefact speaks for itself.&quot;</span> It doesn&#x27;t &mdash; not to someone who wasn&#x27;t in the room while you made it. The artefact speaks <span class="it">with</span> the documentation. Alone, it&#x27;s mute.</p>
+    <p><span class="em">&quot;Reflection means saying what I felt.&quot;</span> Reflection is analytical, not emotional. &quot;I felt frustrated&quot; is not a research insight. &quot;The system consistently failed at long sustained notes, which frustrated me, but which also revealed that the architecture handles transients better than steady-state signals &mdash; a finding I hadn&#x27;t anticipated&quot; &mdash; that&#x27;s a research insight.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>An exercise: write a reflective note</h2>
+    <p>Think about the last significant thing you worked on &mdash; for this module, for another project, or in your own practice.</p>
+    <p>Write a short reflective note (150–200 words) using the four-question framework:</p>
+    <div class="numbered">
+      <p><span class="em">What happened?</span></p>
+      <p><span class="em">What surprised you?</span></p>
+      <p><span class="em">What does it mean?</span></p>
+      <p><span class="em">What changes?</span></p>
+    </div>
+    <p>Take 10 minutes. We&#x27;ll hear a couple of examples.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>For next week</h2>
+    <p>Week 7: <span class="em">Exhibition vs research output &mdash; complementary, not opposed.</span></p>
+    <p>Your project will likely be exhibited or demonstrated in some form. Next week we ask: how does exhibition relate to the research submission? Are they the same thing? Different things? How do you design for both?</p>
+    <p>Between now and then:</p>
+    <div class="bulleted">
+      <p>Start (or continue) a process log. One entry per working session.</p>
+      <p>Export and timestamp your outputs.</p>
+      <p>Write at least one reflective note using the four-question framework.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>References</h2>
+    <p>Schön, D. (1983). <span class="it">The Reflective Practitioner: How Professionals Think in Action.</span> Basic Books.</p>
+    <p>Gaver, W. &amp; Bowers, J. (2012). <a href="https://dl.acm.org/doi/10.1145/2317956.2318036" target="_blank" rel="noopener noreferrer">&quot;Annotated Portfolios.&quot;</a> <span class="it">Interactions</span>, 19(4), 40–49.</p>
+    <p>Smith, H. &amp; Dean, R. T. (eds.) (2009). <a href="https://edinburghuniversitypress.com/book-practice-led-research-research-led-practice-in-the-creative-arts.html" target="_blank" rel="noopener noreferrer"><span class="it">Practice-led Research, Research-led Practice in the Creative Arts.</span></a> Edinburgh University Press.</p>
+    <p>Borgdorff, H. (2011). &quot;The Production of Knowledge in Artistic Research.&quot; In Biggs &amp; Karlsson (eds.), <a href="https://www.routledge.com/The-Routledge-Companion-to-Research-in-the-Arts/Biggs-Karlsson/p/book/9780415697941" target="_blank" rel="noopener noreferrer"><span class="it">The Routledge Companion to Research in the Arts.</span></a> Routledge, pp. 44–63.</p>
+    <p>Nelson, R. (2013). <a href="https://link.springer.com/book/10.1057/9781137282910" target="_blank" rel="noopener noreferrer"><span class="it">Practice as Research in the Arts.</span></a> Palgrave Macmillan.</p>
+    <p>Kolb, D. (1984). <span class="it">Experiential Learning: Experience as the Source of Learning and Development.</span> Prentice-Hall.</p>
+    <p>Köhler, W. (1929). <span class="it">Gestalt Psychology.</span> Liveright.</p>
+    <p>Ramachandran, V. S. &amp; Hubbard, E. M. (2001). <a href="https://doi.org/10.1023/A:1013819612103" target="_blank" rel="noopener noreferrer">&quot;Synaesthesia &mdash; A Window into Perception, Thought and Language.&quot;</a> <span class="it">Journal of Consciousness Studies</span>, 8(12), 3–34.</p>
+  </div>
+</div>
+
+<div class="slide">
+  <div class="inner">
+    <h2>Questions</h2>
+    <p>Have you started a process log?</p>
+    <p>What&#x27;s the hardest thing to capture about your own practice?</p>
+    <p>What are you afraid of documenting?</p>
+    <p># End of deck</p>
+  </div>
+</div>
+</div>
+
+<div id="nav">
+  <button id="prev-btn" aria-label="Previous">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <span id="counter">01 / 01</span>
+  <button id="next-btn" aria-label="Next">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+  <span id="nav-sep"></span>
+  <button id="highlight-btn" aria-label="Toggle text highlight [H]" title="Toggle text highlight [H]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20h16M9 16l3-9 3 9M6.8 13h10.4"/></svg>
+  </button>
+  <button id="geom-btn" aria-label="Toggle geometry [G]" title="Toggle geometry [G]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+  </button>
+  <span style="width:1px;height:18px;background:rgba(127,127,127,0.22);margin:0 2px;display:inline-block"></span>
+  <button id="notes-btn" aria-label="Speaker notes [N]" title="Speaker notes [N]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="16" height="14" rx="2"/><path d="M8 9h8M8 13h5"/></svg>
+  </button>
+  <span style="width:1px;height:18px;background:rgba(127,127,127,0.22);margin:0 2px;display:inline-block"></span>
+  <button id="mute-btn" aria-label="Toggle audio [M]" title="Toggle audio [M]">
+    <svg id="mute-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+    <svg id="mute-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+  </button>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const SLIDE_TITLES = [
+      "Title",
+      "Recap: where we are",
+      "Why reflection matters",
+      "Schön: the reflective practitioner",
+      "Reflection is not description",
+      "A framework for reflective notes",
+      "Why documentation matters",
+      "What to document: the five layers",
+      "Where documentation lives",
+      "The annotated portfolio",
+      "An annotated portfolio in practice",
+      "Documenting failure",
+      "Documenting for different audiences",
+      "What &quot;good enough&quot; documentation looks like",
+      "Documentation and the iterative cyclic web",
+      "A worked example: documenting a project in creative computing",
+      "Common mistakes",
+      "An exercise: write a reflective note",
+      "For next week",
+      "References",
+      "Questions"
+  ];
+  const SLIDE_IMAGES = [];
+  const SLIDE_SPEAKER_NOTES = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+  const SLIDE_LIVECODE = [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
+  const SLIDE_NARRATION = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
+  const SCENE_MODE = "default";
+  const SCENE_INTENSITY = "medium";
+  const SLIDE_CONTENT_HINTS = ["default", "making", "making", "examining", "examining", "making", "default", "making", "examining", "making", "making", "default", "examining", "examining", "making", "making", "default", "list", "default", "default", "default"];
+  const GEOMETRY_SCOPE = "all";
+
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const TOTAL = slides.length;
+  let cur = 0;
+  let busy = false;
+  let cmFocused = false;  // true while CodeMirror editor has keyboard focus
+
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const highlightBtn = document.getElementById('highlight-btn');
+  const geomBtn = document.getElementById('geom-btn');
+  const notesBtn = document.getElementById('notes-btn');
+
+  function hashString(str) {
+    let h = 1779033703 ^ str.length;
+    for (let i = 0; i < str.length; i++) {
+      h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+      h = (h << 13) | (h >>> 19);
+    }
+    return (h >>> 0);
+  }
+
+  function mulberry32(seed) {
+    return function() {
+      let t = (seed += 0x6d2b79f5);
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const toneDarkIndices = new Set();
+  for (let i = 0; i < TOTAL; i++) {
+    const rnd = mulberry32(hashString(SLIDE_TITLES[i] + '#tone' + i));
+    if (rnd() < 0.16 && i !== 0) toneDarkIndices.add(i);
+  }
+
+  function isDarkSlide(idx) {
+    if (SCENE_MODE === 'tunnel') return true;
+    return toneDarkIndices.has(idx);
+  }
+
+  function pad(v) {
+    return String(v + 1).padStart(2, '0');
+  }
+
+  function syncTheme() {
+    const dark = isDarkSlide(cur);
+    document.body.classList.toggle('tone-dark', dark);
+    renderer.setClearColor(dark ? 0x0d0d0d : 0xfbfbfb, 1);
+  }
+
+  function syncUI() {
+    counter.textContent = pad(cur) + ' / ' + pad(TOTAL - 1);
+    progress.style.width = (((cur + 1) / TOTAL) * 100) + '%';
+    prevBtn.style.opacity = cur === 0 ? 0.25 : 1;
+    nextBtn.style.opacity = cur === TOTAL - 1 ? 0.25 : 1;
+  }
+
+  function go(nextIndex) {
+    if (busy || nextIndex < 0 || nextIndex >= TOTAL || nextIndex === cur) return;
+    busy = true;
+    slides[cur].classList.remove('active');
+    cur = nextIndex;
+    slides[cur].classList.add('active');
+    targetZ = sceneZ(cur);
+    if (GEOMETRY_SCOPE === 'solo') applySoloGeom();
+    syncTheme();
+    syncUI();
+    syncNotesPopup();
+    syncLivePanel(cur);
+    onSlideChange();
+    setTimeout(() => { busy = false; }, 760);
+  }
+
+  prevBtn.onclick = () => go(cur - 1);
+  nextBtn.onclick = () => go(cur + 1);
+
+  function toggleHighlight() {
+    highlightActive = !highlightActive;
+    document.body.classList.toggle('reading-mode', highlightActive);
+    highlightBtn.classList.toggle('active', highlightActive);
+  }
+
+  function toggleGeometry() {
+    geomVisible = !geomVisible;
+    for (const group of groups) {
+      for (const child of group.children) {
+        if (child.userData && child.userData.imageFloat) continue;
+        child.visible = geomVisible;
+      }
+    }
+    geomBtn.classList.toggle('active', !geomVisible);
+  }
+
+  function applySoloGeom() {
+    for (let gi = 0; gi < groups.length; gi++) {
+      groups[gi].visible = (gi === cur);
+    }
+  }
+
+  highlightBtn.onclick = toggleHighlight;
+  geomBtn.onclick = toggleGeometry;
+
+  // ── Speaker notes popup ───────────────────────────────────────────────────
+  let notesWindow = null;
+
+  function notesPopupHtml(slideIndex) {
+    const note = SLIDE_SPEAKER_NOTES[slideIndex];
+    const title = SLIDE_TITLES[slideIndex];
+    const num = String(slideIndex + 1).padStart(2, '0');
+    const total = String(TOTAL).padStart(2, '0');
+    const escape = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const noteHtml = note
+      ? '<p>' + escape(note) + '</p>'
+      : '<p class="empty">No speaker notes for this slide.</p>';
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Notes — Slide ${num}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: system-ui, sans-serif; background: #1a1a1a; color: #e8e8e8;
+          padding: 24px 28px 32px; line-height: 1.65; }
+  header { display:flex; justify-content:space-between; align-items:baseline;
+             border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:20px; }
+  .slide-num { font-size:11px; letter-spacing:1.6px; text-transform:uppercase;
+                color:rgba(255,255,255,0.36); font-family:monospace; }
+  h2 { font-size:17px; font-weight:400; color:#fff; line-height:1.3; max-width:520px; }
+  .notes { font-size:15px; color:rgba(255,255,255,0.82); }
+  .notes p { margin-bottom:10px; }
+  .empty { color:rgba(255,255,255,0.28); font-style:italic; }
+</style>
+</head>
+<body>
+<header>
+  <h2>${escape(title)}</h2>
+  <span class="slide-num">${num} / ${total}</span>
+</header>
+<div class="notes">${noteHtml}</div>
+</body>
+</html>`;
+  }
+
+  function syncNotesPopup() {
+    if (!notesWindow || notesWindow.closed) return;
+    notesWindow.document.open();
+    notesWindow.document.write(notesPopupHtml(cur));
+    notesWindow.document.close();
+  }
+
+  function openNotesPopup() {
+    if (notesWindow && !notesWindow.closed) {
+      notesWindow.focus();
+      syncNotesPopup();
+      notesBtn.classList.add('active');
+      return;
+    }
+    const w = 520, h = 440;
+    const left = window.screenX + window.outerWidth;
+    const top  = window.screenY;
+    notesWindow = window.open('', 'speakerNotes',
+      `width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`);
+    if (!notesWindow) {
+      alert('Popup blocked — please allow popups for this page to use speaker notes.');
+      return;
+    }
+    notesWindow.onbeforeunload = () => {
+      notesWindow = null;
+      notesBtn.classList.remove('active');
+    };
+    syncNotesPopup();
+    notesBtn.classList.add('active');
+  }
+
+  notesBtn.onclick = openNotesPopup;
+  // ─────────────────────────────────────────────────────────────────────────
+
+  document.addEventListener('keydown', (e) => {
+    if (cmFocused) return;
+    if (['ArrowRight', 'ArrowDown', ' '].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+    if (['ArrowLeft', 'ArrowUp'].includes(e.key)) { e.preventDefault(); go(cur - 1); }
+    if (e.key === 'w' || e.key === 'W') { e.preventDefault(); go(cur + 1); }
+    if (e.key === 's' || e.key === 'S') { e.preventDefault(); go(cur - 1); }
+    if (e.key === 'a' || e.key === 'A') { e.preventDefault(); wasdKeys['a'] = true; }
+    if (e.key === 'd' || e.key === 'D') { e.preventDefault(); wasdKeys['d'] = true; }
+    if (e.key === 'h' || e.key === 'H') { e.preventDefault(); toggleHighlight(); }
+    if (e.key === 'g' || e.key === 'G') { e.preventDefault(); toggleGeometry(); }
+    if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openNotesPopup(); }
+    if (e.key === 'm' || e.key === 'M') { e.preventDefault(); toggleMute(); }
+    if (e.key === 'v' || e.key === 'V') { e.preventDefault(); speakNarration(cur); }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (e.key === 'a' || e.key === 'A') wasdKeys['a'] = false;
+    if (e.key === 'd' || e.key === 'D') wasdKeys['d'] = false;
+    // always clear pan keys so camera doesn't stick if key was pressed outside editor
+  });
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? cur + 1 : cur - 1);
+  }, { passive: true });
+
+  let wheelLock = null;
+  document.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (wheelLock) return;
+    wheelLock = setTimeout(() => (wheelLock = null), 860);
+    go(e.deltaY > 0 ? cur + 1 : cur - 1);
+  }, { passive: false });
+
+  syncUI();
+
+  const canvas = document.getElementById('bg-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 700);
+  cam.position.set(0, 0, 0);
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    cam.aspect = window.innerWidth / window.innerHeight;
+    cam.updateProjectionMatrix();
+  });
+
+  const GAP = 16;
+  const sceneZ = (i) => -i * GAP;
+  let targetZ = 0;
+  let camTargetX = 0;
+  let geomVisible = true;
+  let highlightActive = false;
+  const wasdKeys = {};
+
+  function lineMaterial(opacity, dark, colorOverride) {
+    return new THREE.MeshBasicMaterial({
+      color: colorOverride !== undefined ? colorOverride : (dark ? 0xffffff : 0x111111),
+      wireframe: true,
+      transparent: true,
+      opacity
+    });
+  }
+
+  function lineMatBasic(opacity, dark, colorOverride) {
+    return new THREE.LineBasicMaterial({
+      color: colorOverride !== undefined ? colorOverride : (dark ? 0xffffff : 0x111111),
+      transparent: true,
+      opacity
+    });
+  }
+
+  function intensityScale() {
+    if (SCENE_INTENSITY === 'low') return 0.72;
+    if (SCENE_INTENSITY === 'high') return 1.34;
+    return 1.0;
+  }
+
+  function intensityMotionScale() {
+    if (SCENE_INTENSITY === 'low') return 0.8;
+    if (SCENE_INTENSITY === 'high') return 1.35;
+    return 1.0;
+  }
+
+  function scaledCount(base, minCount = 1) {
+    return Math.max(minCount, Math.round(base * intensityScale()));
+  }
+
+  function addRoadJourney(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const road = new THREE.Mesh(
+      new THREE.PlaneGeometry(26, 180, 14, 80),
+      lineMaterial(dark ? 0.22 : 0.13, dark)
+    );
+    road.position.set(0, -3.4, -58);
+    road.rotation.x = -Math.PI * 0.5;
+    road.userData = { roadWave: true, amp: 0.05 * ms, speed: 0.22 * ms, seed: rand() * 9.0 };
+    group.add(road);
+
+    const stripeCount = scaledCount(18, 8);
+    for (let i = 0; i < stripeCount; i++) {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 2.0), lineMaterial(dark ? 0.28 : 0.16, dark));
+      stripe.position.set(0, -3.24, -10 - i * 8.6);
+      stripe.userData = { roadStripe: true };
+      group.add(stripe);
+    }
+
+    const skyCount = scaledCount(5, 2);
+    for (let i = 0; i < skyCount; i++) {
+      const geo = i % 2 ? new THREE.IcosahedronGeometry(0.38 + rand() * 0.45, 0) : new THREE.OctahedronGeometry(0.36 + rand() * 0.4, 0);
+      const m = new THREE.Mesh(geo, lineMaterial(dark ? 0.22 : 0.12, dark));
+      m.position.set((rand() - 0.5) * 12, 2.7 + rand() * 2.5, -8 - rand() * 48);
+      m.userData = { ry: (rand() - 0.5) * 0.008 * ms, drift: true, sp: (0.18 + rand() * 0.25) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  function addTunnelJourney(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const tunnel = new THREE.Mesh(
+      new THREE.CylinderGeometry(8.4, 8.4, 165, 20, 48, true),
+      lineMaterial(0.17, dark)
+    );
+    tunnel.position.set(0, 0, -60);
+    tunnel.rotation.x = Math.PI * 0.5;
+    tunnel.userData = { rz: 0.0008 * ms };
+    group.add(tunnel);
+
+    const ringCount = scaledCount(22, 10);
+    for (let i = 0; i < ringCount; i++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(7.1, 0.035, 8, 44), lineMaterial(0.2, dark));
+      ring.position.set(0, 0, -6 - i * 7.2);
+      ring.userData = { ry: (i % 2 ? 1 : -1) * 0.0012 * ms };
+      group.add(ring);
+    }
+  }
+
+  function addOceanJourney(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const ocean = new THREE.Mesh(
+      new THREE.PlaneGeometry(140, 165, 52, 64),
+      lineMaterial(dark ? 0.2 : 0.11, dark)
+    );
+    ocean.position.set(0, -3.2, -56);
+    ocean.rotation.x = -Math.PI * 0.5;
+    ocean.userData = { oceanWave: true, amp: (0.16 + rand() * 0.12) * ms, speed: (0.46 + rand() * 0.3) * ms, seed: rand() * 8.0 };
+    group.add(ocean);
+
+    const sail = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.6, 3), lineMaterial(dark ? 0.28 : 0.17, dark));
+    sail.position.set(0, -1.8, -8.5);
+    sail.rotation.z = Math.PI * 0.5;
+    sail.userData = { sailBoat: true, ph: rand() * 6.28 };
+    group.add(sail);
+
+    const skyCount = scaledCount(4, 2);
+    for (let i = 0; i < skyCount; i++) {
+      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(0.3 + rand() * 0.25, 0), lineMaterial(dark ? 0.22 : 0.12, dark));
+      m.position.set((rand() - 0.5) * 16, 2.2 + rand() * 2.4, -16 - rand() * 38);
+      m.userData = { ry: (rand() - 0.5) * 0.006 * ms, drift: true, sp: (0.15 + rand() * 0.2) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  function addPsychedelicJourney(rand, group) {
+    const ms = intensityMotionScale();
+    const palette = [0xff5e5b, 0xf4f269, 0x5dfdcb, 0x43c6ff, 0xff7ee2];
+
+    const shapeCount = scaledCount(24, 12);
+    for (let i = 0; i < shapeCount; i++) {
+      const color = palette[i % palette.length];
+      const geo = i % 3 === 0 ? new THREE.TorusKnotGeometry(0.28 + rand() * 0.18, 0.055, 72, 12) :
+                  (i % 3 === 1 ? new THREE.IcosahedronGeometry(0.24 + rand() * 0.22, 0) : new THREE.OctahedronGeometry(0.22 + rand() * 0.2, 0));
+      const m = new THREE.Mesh(geo, lineMaterial(0.24, false, color));
+      m.position.set((rand() - 0.5) * 12.5, (rand() - 0.5) * 7.2, -3 - rand() * 58);
+      m.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
+      m.userData = { ry: (rand() - 0.5) * 0.03 * ms, rx: (rand() - 0.5) * 0.02 * ms, rz: (rand() - 0.5) * 0.02 * ms, drift: true, sp: (0.4 + rand() * 0.8) * ms, ph: rand() * 6.28, psychoHue: true };
+      group.add(m);
+    }
+
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(42, 160, 22, 76), lineMaterial(0.18, false, 0x43c6ff));
+    floor.position.set(0, -3.0, -52);
+    floor.rotation.x = -Math.PI * 0.5;
+    floor.userData = { oceanWave: true, amp: 0.11 * ms, speed: 1.15 * ms, seed: rand() * 8.0 };
+    group.add(floor);
+  }
+
+  function pickMotif(rand, group, dark) {
+    const intensity = intensityScale();
+    const ms = intensityMotionScale();
+    const baseOpacity = (dark ? 0.18 : 0.095) * Math.min(1.4, 0.9 + intensity * 0.25);
+    const motif = Math.floor(rand() * 5);
+
+    if (motif === 0) {
+      const rows = 12;
+      const cols = 20;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (rand() > 0.33) continue;
+          const m = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.55), lineMaterial(baseOpacity * 0.95, dark));
+          m.position.set((c - cols / 2) * 0.7, (r - rows / 2) * 0.7, -2.4 + Math.sin(c * 0.3) * 0.5);
+          m.rotation.x = -Math.PI * 0.38;
+          m.userData = { wave: true, k: (rand() * 2 + 0.5) * ms, ph: rand() * Math.PI * 2 };
+          group.add(m);
+        }
+      }
+      return;
+    }
+
+    if (motif === 1) {
+      const count = scaledCount(18 + Math.floor(rand() * 14), 10);
+      for (let i = 0; i < count; i++) {
+        const sz = 0.18 + rand() * 0.8;
+        const geo = rand() > 0.5 ? new THREE.BoxGeometry(sz, sz, sz) : new THREE.IcosahedronGeometry(sz * 0.7, 0);
+        const m = new THREE.Mesh(geo, lineMaterial(baseOpacity * 1.05, dark));
+        m.position.set((rand() - 0.5) * 10, (rand() - 0.5) * 6, -1.5 - rand() * 3);
+        m.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
+        m.userData = { ry: (rand() - 0.5) * 0.012 * ms, rx: (rand() - 0.5) * 0.008 * ms, drift: true, sp: (0.18 + rand() * 0.45) * ms, ph: rand() * 6.28 };
+        group.add(m);
+      }
+      return;
+    }
+
+    if (motif === 2) {
+      const ringCount = scaledCount(2 + Math.floor(rand() * 4), 2);
+      for (let i = 0; i < ringCount; i++) {
+        const radius = 0.9 + i * 0.55 + rand() * 0.2;
+        const m = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.025 + rand() * 0.02, 8, 48), lineMaterial(baseOpacity * 1.08, dark));
+        m.position.set((rand() - 0.5) * 2.2, (rand() - 0.5) * 1.8, -2.2 - i * 0.4);
+        m.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
+        m.userData = { ry: (rand() - 0.5) * 0.012 * ms, rz: (rand() - 0.5) * 0.008 * ms };
+        group.add(m);
+      }
+      return;
+    }
+
+    if (motif === 3) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(18, 12, 24, 18), lineMaterial(baseOpacity * 0.9, dark));
+      m.position.set(0, -2.8, -3.5);
+      m.rotation.x = -Math.PI * 0.47;
+      m.userData = { landscape: true, amp: (0.15 + rand() * 0.2) * ms, speed: (0.35 + rand() * 0.3) * ms, seed: rand() * 8.0 };
+      group.add(m);
+      return;
+    }
+
+    const count = scaledCount(20 + Math.floor(rand() * 20), 12);
+    for (let i = 0; i < count; i++) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.07 + rand() * 0.14, 6, 4), lineMaterial(baseOpacity * 1.2, dark));
+      m.position.set((rand() - 0.5) * 12, (rand() - 0.5) * 6.4, -1.5 - rand() * 4);
+      m.userData = { drift: true, sp: (0.2 + rand() * 0.8) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  const imageBySlide = new Map();
+  for (const spec of SLIDE_IMAGES) {
+    if (!imageBySlide.has(spec.slide)) imageBySlide.set(spec.slide, []);
+    imageBySlide.get(spec.slide).push(spec);
+  }
+
+  const textureLoader = new THREE.TextureLoader();
+
+  function addImagePlane(group, imageSpec, dark, slot) {
+    const wrap = new THREE.Group();
+    const mobile = window.innerWidth < 820;
+    const baseX = mobile ? 0 : 4.25;
+    const baseY = mobile ? -1.25 - slot * 1.9 : 0.7 - slot * 2.4;
+    wrap.position.set(baseX, baseY, -1.2 - slot * 0.12);
+    wrap.userData = { imageFloat: true, baseY, ph: slot * 0.9 };
+
+    const placeholderGeo = new THREE.PlaneGeometry(3.8, 2.2);
+    const imageMat = new THREE.MeshBasicMaterial({
+      color: dark ? 0xf3f3f3 : 0xffffff,
+      transparent: true,
+      opacity: dark ? 0.92 : 0.98,
+      side: THREE.DoubleSide,
+    });
+
+    const plane = new THREE.Mesh(placeholderGeo, imageMat);
+    wrap.add(plane);
+
+    const frame = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.02, 2.38),
+      lineMaterial(dark ? 0.25 : 0.18, dark)
+    );
+    frame.position.z = -0.03;
+    wrap.add(frame);
+
+    textureLoader.load(
+      imageSpec.src,
+      (tex) => {
+        if (tex.colorSpace !== undefined && THREE.SRGBColorSpace !== undefined) {
+          tex.colorSpace = THREE.SRGBColorSpace;
+        } else if (tex.encoding !== undefined && THREE.sRGBEncoding !== undefined) {
+          tex.encoding = THREE.sRGBEncoding;
+        }
+
+        const imgW = tex.image && tex.image.width ? tex.image.width : 16;
+        const imgH = tex.image && tex.image.height ? tex.image.height : 9;
+        const aspect = imgW / imgH;
+        const maxW = mobile ? 4.8 : 4.6;
+        const maxH = mobile ? 2.8 : 3.1;
+        let w = maxW;
+        let h = w / aspect;
+        if (h > maxH) {
+          h = maxH;
+          w = h * aspect;
+        }
+
+        plane.geometry.dispose();
+        frame.geometry.dispose();
+        plane.geometry = new THREE.PlaneGeometry(w, h);
+        frame.geometry = new THREE.PlaneGeometry(w + 0.24, h + 0.24);
+        imageMat.map = tex;
+        imageMat.needsUpdate = true;
+      },
+      undefined,
+      () => {
+        console.warn('Unable to load slide image:', imageSpec.src);
+      }
+    );
+
+    group.add(wrap);
+  }
+
+  // ── Content-aware geometry builders ─────────────────────────────────────
+  function addGapScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.20 : 0.11;
+    // Two face-on torus rings — the hole IS the gap
+    const outerRing = new THREE.Mesh(
+      new THREE.TorusGeometry(2.6, 0.045, 10, 72),
+      lineMaterial(dark ? 0.40 : 0.24, dark)
+    );
+    outerRing.position.set(0, 0, -2.2);
+    outerRing.userData = { ry: 0.003 * ms, rz: 0.0009 * ms };
+    group.add(outerRing);
+
+    const innerRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1.3, 0.028, 7, 52),
+      lineMaterial(dark ? 0.28 : 0.16, dark)
+    );
+    innerRing.position.set(0, 0, -2.2);
+    innerRing.userData = { ry: -0.006 * ms };
+    group.add(innerRing);
+
+    // Faint spoke lines from center to outer ring — converging on the void
+    const spokeCount = scaledCount(8, 6);
+    for (let i = 0; i < spokeCount; i++) {
+      const a = (i / spokeCount) * Math.PI * 2;
+      const pts = [
+        new THREE.Vector3(0, 0, -2.2),
+        new THREE.Vector3(Math.cos(a) * 2.6, Math.sin(a) * 2.6, -2.2)
+      ];
+      group.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        lineMatBasic(dark ? 0.13 : 0.07, dark)
+      ));
+    }
+
+    // Dense matter OUTSIDE the ring — annular cluster, nothing inside the void
+    const count = scaledCount(22, 13);
+    for (let i = 0; i < count; i++) {
+      const angle = rand() * Math.PI * 2;
+      const radius = 3.1 + rand() * 3.4;
+      const sz = 0.10 + rand() * 0.30;
+      const geo = rand() > 0.5
+        ? new THREE.IcosahedronGeometry(sz, 0)
+        : new THREE.OctahedronGeometry(sz, 0);
+      const m = new THREE.Mesh(geo, lineMaterial(op, dark));
+      m.position.set(
+        Math.cos(angle) * radius,
+        Math.sin(angle) * radius * 0.55,
+        -1.5 - rand() * 4.5
+      );
+      m.rotation.set(rand() * Math.PI, rand() * Math.PI, 0);
+      m.userData = { ry: (rand() - 0.5) * 0.006 * ms, drift: true, sp: (0.08 + rand() * 0.14) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  function addMakingScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.20 : 0.11;
+    const count = scaledCount(8, 5);
+    for (let i = 0; i < count; i++) {
+      const bw = 0.6 + rand() * 1.1, bh = 0.25 + rand() * 0.5, bd = 0.5 + rand() * 0.8;
+      const box = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), lineMaterial(op * 0.8, dark));
+      const bx = (rand() - 0.5) * 6, by = -2.5 + i * 0.65 + (rand() - 0.5) * 0.3, bz = -1.8 - rand() * 3;
+      box.position.set(bx, by, bz);
+      box.userData = { pulse: true, baseOpacity: op * 0.8, speed: 0.4 + rand() * 0.6, ph: rand() * 6.28, ry: (rand() - 0.5) * 0.003 * ms };
+      group.add(box);
+      if (i < count - 1) {
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.45 + rand() * 0.45, 0.06), lineMaterial(op * 0.5, dark));
+        beam.position.set(bx + (rand() - 0.5) * bw * 0.7, by + 0.4, bz + (rand() - 0.5) * 0.3);
+        beam.rotation.z = (rand() - 0.5) * 0.4;
+        group.add(beam);
+      }
+    }
+  }
+
+  function addMovingScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.20 : 0.11;
+    const pathCount = scaledCount(4, 2);
+    for (let p = 0; p < pathCount; p++) {
+      const pts = [];
+      for (let k = 0; k <= 6; k++) {
+        pts.push(new THREE.Vector3((rand() - 0.5) * 10, (rand() - 0.5) * 5.5, -1.5 - p * 1.2 - k * 0.6));
+      }
+      const curve = new THREE.CatmullRomCurve3(pts);
+      group.add(new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(curve.getPoints(60)),
+        lineMatBasic(op * 0.7, dark)
+      ));
+      const traveller = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1 + rand() * 0.1, 6, 4),
+        lineMaterial(op * 1.4, dark)
+      );
+      traveller.position.copy(curve.getPoint(rand()));
+      traveller.userData = { traveller: true, curve, speed: (0.08 + rand() * 0.12) * ms, travelT: rand() };
+      group.add(traveller);
+    }
+  }
+
+  function addSearchingScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.20 : 0.11;
+    const origin = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), lineMaterial(dark ? 0.38 : 0.22, dark));
+    origin.position.set(0, 0, -2.0);
+    origin.userData = { ry: 0.015 * ms };
+    group.add(origin);
+    const ringCount = scaledCount(4, 3);
+    for (let i = 0; i < ringCount; i++) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.02, 6, 40), lineMaterial(op, dark));
+      ring.position.set(0, 0, -2.0);
+      ring.userData = { expandRing: true, maxScale: 2.8 + i * 0.5, speed: (0.18 + i * 0.05) * ms, ringT: i / ringCount, baseOpacity: op };
+      group.add(ring);
+    }
+    const dirX = Math.cos(rand() * Math.PI * 2), dirY = Math.sin(rand() * Math.PI * 2);
+    const probe = new THREE.Mesh(new THREE.IcosahedronGeometry(0.2, 0), lineMaterial(dark ? 0.3 : 0.16, dark));
+    probe.position.set(0, 0, -2.0);
+    probe.userData = { probeOut: true, speed: (0.15 + rand() * 0.1) * ms, probeT: rand(), baseX: 0, baseY: 0, baseZ: -2.0, dirX, dirY, ry: 0.018 * ms };
+    group.add(probe);
+  }
+
+  function addExaminingScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.18 : 0.10;
+    const focal = new THREE.Vector3(0, 0, -1.8);
+    const lineCount = scaledCount(22, 14);
+    const linePos = [];
+    for (let i = 0; i < lineCount; i++) {
+      const theta = (i / lineCount) * Math.PI * 2;
+      const r = 4.5 + rand() * 2.0;
+      const z = -1.0 - rand() * 5.0;
+      linePos.push(Math.cos(theta) * r, Math.sin(theta) * r, z, focal.x, focal.y, focal.z);
+    }
+    const lGeo = new THREE.BufferGeometry();
+    lGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+    group.add(new THREE.LineSegments(lGeo, lineMatBasic(dark ? 0.22 : 0.12, dark)));
+    const lens = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.025, 8, 52), lineMaterial(dark ? 0.28 : 0.16, dark));
+    lens.position.copy(focal);
+    lens.userData = { ry: 0.005 * ms, rz: 0.003 * ms };
+    group.add(lens);
+    const focalCount = scaledCount(6, 4);
+    for (let i = 0; i < focalCount; i++) {
+      const sz = 0.06 + rand() * 0.1;
+      const m = new THREE.Mesh(
+        rand() > 0.5 ? new THREE.SphereGeometry(sz, 5, 4) : new THREE.BoxGeometry(sz, sz, sz),
+        lineMaterial(dark ? 0.35 : 0.22, dark)
+      );
+      m.position.set(focal.x + (rand() - 0.5) * 0.8, focal.y + (rand() - 0.5) * 0.8, focal.z + (rand() - 0.5) * 0.5);
+      m.userData = { drift: true, sp: (0.2 + rand() * 0.3) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  function addNetworkScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.20 : 0.11;
+    const nodeCount = scaledCount(14, 8);
+    const nodes = [];
+    for (let i = 0; i < nodeCount; i++) {
+      const r = 0.06 + rand() * 0.14;
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 5, 4), lineMaterial(op * 1.3, dark));
+      m.position.set((rand() - 0.5) * 9, (rand() - 0.5) * 5.5, -1.5 - rand() * 4);
+      m.userData = { drift: true, sp: (0.12 + rand() * 0.18) * ms, ph: rand() * 6.28 };
+      nodes.push(m);
+      group.add(m);
+    }
+    const edgeCount = scaledCount(Math.floor(nodeCount * 1.4), 8);
+    const edgePos = [];
+    for (let e = 0; e < edgeCount; e++) {
+      const a = nodes[Math.floor(rand() * nodeCount)], b = nodes[Math.floor(rand() * nodeCount)];
+      if (a === b) continue;
+      edgePos.push(a.position.x, a.position.y, a.position.z, b.position.x, b.position.y, b.position.z);
+    }
+    if (edgePos.length > 0) {
+      const eGeo = new THREE.BufferGeometry();
+      eGeo.setAttribute('position', new THREE.Float32BufferAttribute(edgePos, 3));
+      group.add(new THREE.LineSegments(eGeo, lineMatBasic(op * 0.6, dark)));
+    }
+  }
+
+  function addDataScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.18 : 0.10;
+    const barCount = scaledCount(12, 7);
+    for (let i = 0; i < barCount; i++) {
+      const bh = 0.3 + rand() * 3.5, bw = 0.35 + rand() * 0.2;
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bw * 0.8), lineMaterial(op, dark));
+      bar.position.set(-((barCount - 1) * 0.35) + i * 0.7, bh / 2 - 2.5, -2.0 - rand() * 1.5);
+      bar.userData = { ry: (rand() - 0.5) * 0.003 * ms };
+      group.add(bar);
+    }
+    const basePts = [new THREE.Vector3(-5, -2.5, -1.8), new THREE.Vector3(5, -2.5, -1.8)];
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(basePts), lineMatBasic(dark ? 0.35 : 0.22, dark)));
+  }
+
+  function addFlowScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.18 : 0.10;
+    const streamCount = scaledCount(3, 2);
+    for (let s = 0; s < streamCount; s++) {
+      const pts = [];
+      for (let k = 0; k <= 8; k++) {
+        pts.push(new THREE.Vector3(
+          Math.sin(k * 0.8 + s * 2.1) * (2.5 + rand()),
+          Math.cos(k * 0.55 + s) * 1.8,
+          -1.5 - k * 0.5 - s * 0.5
+        ));
+      }
+      const curve = new THREE.CatmullRomCurve3(pts);
+      group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(50)), lineMatBasic(op, dark)));
+      const stepCount = scaledCount(5, 3);
+      for (let mi = 0; mi < stepCount; mi++) {
+        const pt = curve.getPoint(mi / (stepCount - 1));
+        const marker = new THREE.Mesh(new THREE.SphereGeometry(0.1 + rand() * 0.08, 5, 4), lineMaterial(op * 1.4, dark));
+        marker.position.copy(pt);
+        marker.userData = { ry: 0.01 * ms, drift: true, sp: (0.15 + rand() * 0.2) * ms, ph: rand() * 6.28 };
+        group.add(marker);
+      }
+    }
+  }
+
+  function addHierarchyScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.20 : 0.11;
+    const levels = 3;
+    for (let lvl = 0; lvl < levels; lvl++) {
+      const r = 1.0 + lvl * 1.1;
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.03, 8, 48), lineMaterial(op, dark));
+      ring.position.set(0, (levels - 1 - lvl) * 1.4 - 1.5, -2.2);
+      ring.rotation.x = Math.PI * 0.1;
+      ring.userData = { ry: (lvl % 2 ? 1 : -1) * 0.005 * ms };
+      group.add(ring);
+      const nodeCount = 3 + lvl * 2;
+      for (let n = 0; n < nodeCount; n++) {
+        const theta = (n / nodeCount) * Math.PI * 2;
+        const node = new THREE.Mesh(new THREE.SphereGeometry(0.07 + rand() * 0.05, 5, 4), lineMaterial(op * 1.2, dark));
+        node.position.set(ring.position.x + Math.cos(theta) * r, ring.position.y + Math.sin(theta) * r * 0.15, ring.position.z);
+        group.add(node);
+      }
+    }
+    for (let lvl = 0; lvl < levels - 1; lvl++) {
+      const pts = [
+        new THREE.Vector3(0, (levels - 1 - lvl) * 1.4 - 1.5, -2.2),
+        new THREE.Vector3(0, (levels - 2 - lvl) * 1.4 - 1.5, -2.2)
+      ];
+      group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMatBasic(op * 0.7, dark)));
+    }
+  }
+
+  function addOrbitScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.18 : 0.10;
+    const centre = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8), lineMaterial(dark ? 0.32 : 0.18, dark));
+    centre.position.set(0, 0, -2.0);
+    centre.userData = { ry: 0.009 * ms };
+    group.add(centre);
+    const orbitCount = scaledCount(3, 2);
+    for (let o = 0; o < orbitCount; o++) {
+      const radius = 1.2 + o * 0.9;
+      const tilt = (rand() - 0.5) * Math.PI * 0.5;
+      const orbitPts = [];
+      for (let k = 0; k <= 64; k++) {
+        const a = (k / 64) * Math.PI * 2;
+        orbitPts.push(new THREE.Vector3(Math.cos(a) * radius, Math.sin(a) * radius * Math.sin(tilt), -2.0 + Math.sin(a) * radius * Math.cos(tilt) * 0.4));
+      }
+      group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(orbitPts), lineMatBasic(op * 0.7, dark)));
+      const planet = new THREE.Mesh(
+        rand() > 0.5 ? new THREE.IcosahedronGeometry(0.14 + rand() * 0.12, 0) : new THREE.OctahedronGeometry(0.14 + rand() * 0.12, 0),
+        lineMaterial(op * 1.3, dark)
+      );
+      const initA = rand() * Math.PI * 2;
+      planet.position.set(Math.cos(initA) * radius, Math.sin(initA) * radius * Math.sin(tilt), -2.0 + Math.sin(initA) * radius * Math.cos(tilt) * 0.4);
+      planet.userData = { orbit: true, orbitRadius: radius, orbitTilt: tilt, orbitSpeed: (0.008 + rand() * 0.01) * ms, orbitAngle: initA, orbitCentreZ: -2.0, ry: 0.012 * ms };
+      group.add(planet);
+    }
+  }
+
+  function addLatticeScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.16 : 0.09;
+    const nx = 5, ny = 4, nz = 3, sp = 1.1;
+    for (let ix = 0; ix < nx; ix++) {
+      for (let iy = 0; iy < ny; iy++) {
+        for (let iz = 0; iz < nz; iz++) {
+          const m = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), lineMaterial(op, dark));
+          m.position.set((ix - (nx - 1) / 2) * sp, (iy - (ny - 1) / 2) * sp, -1.5 - iz * sp);
+          m.userData = { ry: 0.005 * ms, rx: 0.004 * ms };
+          group.add(m);
+        }
+      }
+    }
+  }
+
+  function addSpiralScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.18 : 0.10;
+    const count = scaledCount(28, 16);
+    for (let i = 0; i < count; i++) {
+      const angle = i * 2.399;
+      const r = Math.sqrt(i / count) * 5.5;
+      const sz = 0.08 + rand() * 0.16;
+      const geo = rand() > 0.6 ? new THREE.IcosahedronGeometry(sz, 0) : new THREE.BoxGeometry(sz, sz, sz);
+      const m = new THREE.Mesh(geo, lineMaterial(op, dark));
+      m.position.set(Math.cos(angle) * r, Math.sin(angle) * r, -1.5 - (i / count) * 4.5);
+      m.rotation.set(rand() * Math.PI, rand() * Math.PI, 0);
+      m.userData = { ry: (rand() - 0.5) * 0.008 * ms, drift: true, sp: (0.1 + rand() * 0.15) * ms, ph: rand() * 6.28 };
+      group.add(m);
+    }
+  }
+
+  function addListScene(rand, group, dark) {
+    const ms = intensityMotionScale();
+    const op = dark ? 0.18 : 0.10;
+    const barCount = scaledCount(7, 5);
+    for (let i = 0; i < barCount; i++) {
+      const bw = 3.5 + rand() * 3.0;
+      const bar = new THREE.Mesh(
+        new THREE.PlaneGeometry(bw, 0.15, Math.round(bw * 4), 1),
+        lineMaterial(op, dark)
+      );
+      bar.position.set((rand() - 0.5) * 0.8, 2.2 - i * 0.85, -2.0);
+      bar.userData = { wave: true, k: (0.8 + rand() * 0.8) * ms, ph: rand() * Math.PI * 2 };
+      group.add(bar);
+    }
+  }
+
+  function buildSceneForMode(rand, group, dark, slideIndex) {
+    if (SCENE_MODE === 'road')        { addRoadJourney(rand, group, dark); return; }
+    if (SCENE_MODE === 'tunnel')      { addTunnelJourney(rand, group, dark); return; }
+    if (SCENE_MODE === 'ocean')       { addOceanJourney(rand, group, dark); return; }
+    if (SCENE_MODE === 'psychedelic') { addPsychedelicJourney(rand, group); return; }
+    const hint = (SLIDE_CONTENT_HINTS && SLIDE_CONTENT_HINTS[slideIndex]) || 'default';
+    if (hint === 'gap')       { addGapScene(rand, group, dark); return; }
+    if (hint === 'making')    { addMakingScene(rand, group, dark); return; }
+    if (hint === 'moving')    { addMovingScene(rand, group, dark); return; }
+    if (hint === 'searching') { addSearchingScene(rand, group, dark); return; }
+    if (hint === 'examining') { addExaminingScene(rand, group, dark); return; }
+    if (hint === 'network')   { addNetworkScene(rand, group, dark); return; }
+    if (hint === 'data')      { addDataScene(rand, group, dark); return; }
+    if (hint === 'flow')      { addFlowScene(rand, group, dark); return; }
+    if (hint === 'hierarchy') { addHierarchyScene(rand, group, dark); return; }
+    if (hint === 'orbit')     { addOrbitScene(rand, group, dark); return; }
+    if (hint === 'lattice')   { addLatticeScene(rand, group, dark); return; }
+    if (hint === 'wave')      { addOceanJourney(rand, group, dark); return; }
+    if (hint === 'spiral')    { addSpiralScene(rand, group, dark); return; }
+    if (hint === 'list')      { addListScene(rand, group, dark); return; }
+    pickMotif(rand, group, dark);
+  }
+
+  const groups = [];
+  for (let i = 0; i < TOTAL; i++) {
+    const group = new THREE.Group();
+    group.position.z = sceneZ(i) - 7;
+    const rand = mulberry32(hashString(SLIDE_TITLES[i] + '#viz' + i));
+    const darkSlide = isDarkSlide(i);
+    buildSceneForMode(rand, group, darkSlide, i);
+    const images = imageBySlide.get(i) || [];
+    for (let j = 0; j < images.length; j++) {
+      addImagePlane(group, images[j], darkSlide, j);
+    }
+    scene.add(group);
+    groups.push(group);
+  }
+
+  if (GEOMETRY_SCOPE === 'solo') applySoloGeom();
+
+  const clock = new THREE.Clock();
+  const tmpVec = new THREE.Vector3();
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+
+    cam.position.z += (targetZ - cam.position.z) * 0.062;
+
+    if (wasdKeys['a']) camTargetX = Math.max(-4.5, camTargetX - 0.07);
+    if (wasdKeys['d']) camTargetX = Math.min(4.5, camTargetX + 0.07);
+    if (!wasdKeys['a'] && !wasdKeys['d']) camTargetX *= 0.90;
+    cam.position.x += (camTargetX - cam.position.x) * 0.08;
+
+    for (let gi = 0; gi < groups.length; gi++) {
+      const group = groups[gi];
+      for (let ci = 0; ci < group.children.length; ci++) {
+        const mesh = group.children[ci];
+        const d = mesh.userData || {};
+
+        if (d.ry) mesh.rotation.y += d.ry;
+        if (d.rx) mesh.rotation.x += d.rx;
+        if (d.rz) mesh.rotation.z += d.rz;
+
+        if (d.drift) {
+          mesh.position.x += Math.sin(t * d.sp + d.ph) * 0.002;
+          mesh.position.y += Math.cos(t * d.sp * 0.7 + d.ph) * 0.0015;
+        }
+
+        if (d.wave) {
+          mesh.position.z = -2.2 + Math.sin(t * d.k + d.ph) * 0.5;
+        }
+
+        if (d.roadStripe) {
+          mesh.position.z += Math.sin(t * 0.75) * 0.0012;
+        }
+
+        if (d.roadWave) {
+          const geo = mesh.geometry;
+          const pos = geo.attributes.position;
+          for (let i = 0; i < pos.count; i++) {
+            tmpVec.fromBufferAttribute(pos, i);
+            const z = Math.sin(tmpVec.x * 0.4 + t * d.speed + d.seed) * d.amp;
+            pos.setZ(i, z);
+          }
+          pos.needsUpdate = true;
+        }
+
+        if (d.oceanWave) {
+          const geo = mesh.geometry;
+          const pos = geo.attributes.position;
+          for (let i = 0; i < pos.count; i++) {
+            tmpVec.fromBufferAttribute(pos, i);
+            const z = Math.sin(tmpVec.x * 0.55 + t * d.speed + d.seed) * d.amp +
+                      Math.cos(tmpVec.y * 0.45 - t * d.speed * 0.7 + d.seed) * d.amp * 0.6;
+            pos.setZ(i, z);
+          }
+          pos.needsUpdate = true;
+        }
+
+        if (d.landscape) {
+          const geo = mesh.geometry;
+          const pos = geo.attributes.position;
+          for (let i = 0; i < pos.count; i++) {
+            tmpVec.fromBufferAttribute(pos, i);
+            const z = Math.sin(tmpVec.x * 0.85 + t * d.speed + d.seed) * d.amp +
+                      Math.cos(tmpVec.y * 0.75 - t * d.speed * 0.8 + d.seed) * d.amp * 0.7;
+            pos.setZ(i, z);
+          }
+          pos.needsUpdate = true;
+          geo.computeVertexNormals();
+        }
+
+        if (d.imageFloat) {
+          mesh.position.y = d.baseY + Math.sin(t * 0.75 + d.ph) * 0.06;
+        }
+
+        if (d.sailBoat) {
+          mesh.position.y = -1.8 + Math.sin(t * 1.2 + d.ph) * 0.08;
+          mesh.rotation.y = Math.sin(t * 0.8 + d.ph) * 0.28;
+        }
+
+        if (d.psychoHue && mesh.material && mesh.material.color) {
+          const h = (t * 0.09 + d.ph * 0.15) % 1;
+          mesh.material.color.setHSL(h, 0.9, 0.62);
+        }
+
+        if (d.traveller) {
+          d.travelT = ((d.travelT || 0) + d.speed * 0.004) % 1;
+          const pt = d.curve.getPoint(d.travelT);
+          mesh.position.copy(pt);
+        }
+
+        if (d.expandRing) {
+          d.ringT = ((d.ringT || 0) + d.speed * 0.004) % 1;
+          const s = d.ringT * d.maxScale;
+          mesh.scale.set(s, s, 1);
+          if (mesh.material) mesh.material.opacity = d.baseOpacity * (1 - d.ringT * 0.7);
+        }
+
+        if (d.probeOut) {
+          d.probeT = ((d.probeT || 0) + d.speed * 0.003) % 1;
+          const reach = d.probeT * 5.0;
+          mesh.position.set(d.baseX + d.dirX * reach, d.baseY + d.dirY * reach, d.baseZ - reach * 0.5);
+        }
+
+        if (d.pulse && mesh.material) {
+          mesh.material.opacity = d.baseOpacity * (0.55 + 0.45 * Math.sin(t * d.speed + d.ph));
+        }
+
+        if (d.orbit) {
+          d.orbitAngle = (d.orbitAngle || 0) + d.orbitSpeed;
+          const a = d.orbitAngle;
+          mesh.position.x = Math.cos(a) * d.orbitRadius;
+          mesh.position.y = Math.sin(a) * d.orbitRadius * Math.sin(d.orbitTilt);
+          mesh.position.z = d.orbitCentreZ + Math.sin(a) * d.orbitRadius * Math.cos(d.orbitTilt) * 0.4;
+        }
+      }
+    }
+
+    if (window.__liveGlslUpdate) window.__liveGlslUpdate(t);
+    renderer.render(scene, cam);
+  }
+
+  syncTheme();
+  animate();
+
+  // ── Audio system ─────────────────────────────────────────────────────────
+  let audioCtx = null;
+  let masterGain = null;
+  let modeGain = null;
+  let ambiGain = null;
+  let modeNodes = [];
+  let audioReady = false;
+  let isMuted = localStorage.getItem('md3d_muted') === 'true';
+  const muteBtn = document.getElementById('mute-btn');
+  const muteIconOn = document.getElementById('mute-icon-on');
+  const muteIconOff = document.getElementById('mute-icon-off');
+
+  function updateMuteButton() {
+    if (!muteBtn) return;
+    muteBtn.classList.toggle('active', !isMuted);
+    if (muteIconOn)  muteIconOn.style.display  = isMuted ? 'none' : '';
+    if (muteIconOff) muteIconOff.style.display = isMuted ? '' : 'none';
+  }
+  updateMuteButton();
+
+  function initAudio() {
+    if (audioReady) return;
+    audioReady = true;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx.resume();
+
+      const comp = audioCtx.createDynamicsCompressor();
+      comp.threshold.value = -20;
+      comp.knee.value = 10;
+      comp.ratio.value = 6;
+      comp.attack.value = 0.003;
+      comp.release.value = 0.15;
+      comp.connect(audioCtx.destination);
+
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0;
+      masterGain.connect(comp);
+      if (!isMuted) {
+        masterGain.gain.linearRampToValueAtTime(0.22, audioCtx.currentTime + 3.0);
+      }
+
+      modeGain = audioCtx.createGain();
+      modeGain.gain.value = 1;
+      modeGain.connect(masterGain);
+
+      ambiGain = audioCtx.createGain();
+      ambiGain.gain.value = 0.65;  // centre of breath swing
+      ambiGain.connect(modeGain);
+
+      buildModeAudio();
+    } catch (e) {
+      audioReady = false;
+    }
+  }
+
+  function toggleMute() {
+    if (!audioReady) initAudio();
+    isMuted = !isMuted;
+    localStorage.setItem('md3d_muted', isMuted);
+    if (masterGain) {
+      masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+      masterGain.gain.setTargetAtTime(isMuted ? 0 : 0.22, audioCtx.currentTime, 0.25);
+    }
+    updateMuteButton();
+  }
+  if (muteBtn) muteBtn.onclick = toggleMute;
+
+  function makeNoiseSource() {
+    const len = Math.floor(audioCtx.sampleRate * 3);
+    const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    return src;
+  }
+
+  function makeLFO(freq, type = 'sine') {
+    const lfo = audioCtx.createOscillator();
+    lfo.type = type;
+    lfo.frequency.value = freq;
+    lfo.start();
+    modeNodes.push(lfo);
+    return lfo;
+  }
+
+  function makeOsc(freq, type = 'sine') {
+    const osc = audioCtx.createOscillator();
+    osc.type = type;
+    osc.frequency.value = freq;
+    osc.start();
+    modeNodes.push(osc);
+    return osc;
+  }
+
+  function makeGain(val) {
+    const g = audioCtx.createGain();
+    g.gain.value = val;
+    return g;
+  }
+
+  function buildModeAudio() {
+    modeNodes.forEach(n => { try { n.stop(); } catch(e) {} });
+    modeNodes = [];
+
+    if (SCENE_MODE === 'ocean')       buildOceanAudio();
+    else if (SCENE_MODE === 'road')   buildRoadAudio();
+    else if (SCENE_MODE === 'tunnel') buildTunnelAudio();
+    else if (SCENE_MODE === 'psychedelic') buildPsychedelicAudio();
+    else buildDefaultAudio();
+
+    // Breathing LFO: 10 s period, swings ambiGain from ~0.3 up to ~1.0
+    const breathLFO = audioCtx.createOscillator();
+    breathLFO.type = 'sine';
+    breathLFO.frequency.value = 0.1;
+    const breathDepth = audioCtx.createGain();
+    breathDepth.gain.value = 0.35;
+    breathLFO.connect(breathDepth);
+    breathDepth.connect(ambiGain.gain);
+    breathLFO.start();
+    modeNodes.push(breathLFO);
+  }
+
+  function buildOceanAudio() {
+    // Filtered noise → waves
+    const noise = makeNoiseSource();
+    const waveFilter = audioCtx.createBiquadFilter();
+    waveFilter.type = 'bandpass';
+    waveFilter.frequency.value = 120;
+    waveFilter.Q.value = 0.55;
+
+    const lfoDepth = makeGain(40);
+    makeLFO(0.11).connect(lfoDepth);
+    lfoDepth.connect(waveFilter.frequency);
+
+    noise.connect(waveFilter);
+    waveFilter.connect(makeGain(0.55)).connect(ambiGain);
+    noise.start();
+    modeNodes.push(noise);
+
+    // Deep sub
+    makeOsc(110).connect(makeGain(0.15)).connect(ambiGain);
+  }
+
+  function buildRoadAudio() {
+    // Low rumble
+    const rumble = makeNoiseSource();
+    const rumbleF = audioCtx.createBiquadFilter();
+    rumbleF.type = 'lowpass';
+    rumbleF.frequency.value = 110;
+    rumble.connect(rumbleF);
+    rumbleF.connect(makeGain(0.5)).connect(ambiGain);
+    rumble.start();
+    modeNodes.push(rumble);
+
+    // Wind
+    const wind = makeNoiseSource();
+    const windF = audioCtx.createBiquadFilter();
+    windF.type = 'bandpass';
+    windF.frequency.value = 420;
+    windF.Q.value = 0.9;
+    const gustDepth = makeGain(0.18);
+    makeLFO(0.04).connect(gustDepth);
+    gustDepth.connect(makeGain(1).gain);  // modulate wind amplitude
+    wind.connect(windF);
+    windF.connect(makeGain(0.22)).connect(ambiGain);
+    wind.start();
+    modeNodes.push(wind);
+  }
+
+  function buildTunnelAudio() {
+    // Resonant drone
+    const osc = makeOsc(110, 'sawtooth');
+    const res = audioCtx.createBiquadFilter();
+    res.type = 'bandpass';
+    res.frequency.value = 220;
+    res.Q.value = 10;
+
+    const lfoDepth = makeGain(18);
+    makeLFO(0.07).connect(lfoDepth);
+    lfoDepth.connect(res.frequency);
+
+    osc.connect(res);
+    const oscOut = makeGain(0.38);
+    res.connect(oscOut);
+    oscOut.connect(ambiGain);
+
+    // Feedback delay → cave reverb feel
+    const delay = audioCtx.createDelay(0.6);
+    delay.delayTime.value = 0.22;
+    const fb = makeGain(0.38);
+    oscOut.connect(delay);
+    delay.connect(fb);
+    fb.connect(delay);
+    fb.connect(makeGain(0.3)).connect(ambiGain);
+  }
+
+  function buildPsychedelicAudio() {
+    // FM synthesis
+    const carrier = makeOsc(110, 'sine');
+    const mod = makeOsc(220, 'sine');
+    const modDepth = makeGain(85);
+    // Slowly drift modulation ratio
+    const driftDepth = makeGain(55);
+    makeLFO(0.06).connect(driftDepth);
+    driftDepth.connect(mod.frequency);
+
+    mod.connect(modDepth);
+    modDepth.connect(carrier.frequency);
+    carrier.connect(makeGain(0.35)).connect(ambiGain);
+  }
+
+  function buildDefaultAudio() {
+    // Pentatonic drone tuned to deck's title hash
+    const scale = [82.4, 98.0, 110.0, 130.8, 146.8]; // E2 G2 A2 C3 D3
+    const base = scale[hashString(SLIDE_TITLES[0]) % scale.length];
+
+    const osc = makeOsc(base, 'sine');
+    const osc2 = makeOsc(base * 1.5, 'sine');  // perfect fifth, stays in 124–220 Hz
+
+    // Slow vibrato
+    const vibDepth = makeGain(1.4);
+    makeLFO(0.14).connect(vibDepth);
+    vibDepth.connect(osc.frequency);
+
+    const mix = makeGain(0.45);
+    osc.connect(mix);
+    osc2.connect(makeGain(0.22)).connect(mix);
+    mix.connect(ambiGain);
+  }
+
+  // Slide-transition whoosh (tunnel only)
+  function playWhoosh() {
+    if (!audioCtx || isMuted) return;
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(190, now);
+    osc.frequency.exponentialRampToValueAtTime(68, now + 0.55);
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.16, now + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+    osc.connect(g);
+    g.connect(masterGain);
+    osc.start(now);
+    osc.stop(now + 0.7);
+  }
+
+  function onSlideChange() {
+    if (!audioReady) return;
+    if (SCENE_MODE === 'tunnel') playWhoosh();
+    const now = audioCtx.currentTime;
+    modeGain.gain.cancelScheduledValues(now);
+    modeGain.gain.setValueAtTime(modeGain.gain.value, now);
+    modeGain.gain.linearRampToValueAtTime(0.08, now + 0.5);
+    modeGain.gain.linearRampToValueAtTime(1.0, now + 2.2);
+  }
+
+  // Web Speech API narration
+  function speakNarration(slideIndex) {
+    const text = SLIDE_NARRATION[slideIndex];
+    if (!text || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.rate = 0.92;
+    utt.pitch = 1.0;
+    window.speechSynthesis.speak(utt);
+  }
+
+  // Initialise audio on first real user gesture
+  document.addEventListener('click', initAudio, { once: true });
+  document.addEventListener('keydown', initAudio, { once: true });
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Live coding panel ────────────────────────────────────────────────────
+  const liveGroups = new Map();   // slideIndex → THREE.Group for live objects
+  const glslMeshes = new Map();   // slideIndex → {mesh, mat}
+  let cmEditor = null;
+  let liveCurrentSlide = -1;
+  let liveCurrentTab = 0;
+  let liveCollapsed = false;
+  let pyodideReady = false;
+  let pyodideLoading = false;
+  let pyodideInstance = null;
+
+  const livePanel = document.getElementById('live-panel');
+  const liveTabsEl = document.getElementById('live-tabs');
+  const liveEditorMount = document.getElementById('live-editor-mount');
+  const liveErrorEl = document.getElementById('live-error');
+  const liveOutputEl = document.getElementById('live-output');
+  const liveLangBadge = document.getElementById('live-lang-badge');
+  const liveCollapseBtn = document.getElementById('live-collapse-btn');
+
+  function getLiveGroup(slideIndex) {
+    if (!liveGroups.has(slideIndex)) {
+      const lg = new THREE.Group();
+      lg.position.z = sceneZ(slideIndex) - 7;
+      scene.add(lg);
+      liveGroups.set(slideIndex, lg);
+    }
+    return liveGroups.get(slideIndex);
+  }
+
+  function clearLiveGroup(slideIndex) {
+    const lg = liveGroups.get(slideIndex);
+    if (!lg) return;
+    while (lg.children.length > 0) {
+      const child = lg.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+      lg.remove(child);
+    }
+    glslMeshes.delete(slideIndex);
+  }
+
+  function setLiveError(msg) {
+    if (!liveErrorEl) return;
+    liveErrorEl.textContent = msg;
+  }
+
+  function setLiveOutput(msg) {
+    if (!liveOutputEl) return;
+    liveOutputEl.textContent = msg;
+  }
+
+  function runJS(code, slideIndex) {
+    setLiveError('');
+    setLiveOutput('');
+    const liveGroup = getLiveGroup(slideIndex);
+    clearLiveGroup(slideIndex);
+    const outputLines = [];
+    try {
+      const fn = new Function(
+        'THREE', 'group', 'scene', 'camera', 'renderer', 'print',
+        '"use strict";\n' + code
+      );
+      fn(
+        THREE,
+        liveGroup,
+        scene,
+        cam,
+        renderer,
+        (...args) => outputLines.push(args.map(String).join(' '))
+      );
+      if (outputLines.length) setLiveOutput(outputLines.join('\n'));
+    } catch (e) {
+      setLiveError(e.message);
+    }
+  }
+
+  // Default GLSL vertex and starter fragment shaders
+  const GLSL_VERT = `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`.trim();
+
+  const GLSL_DEFAULT_FRAG = `
+uniform float u_time;
+uniform vec2 u_resolution;
+varying vec2 vUv;
+
+void main() {
+  vec2 uv = vUv;
+  vec3 col = 0.5 + 0.5 * cos(u_time + uv.xyx + vec3(0.0, 2.0, 4.0));
+  gl_FragColor = vec4(col, 1.0);
+}`.trim();
+
+  function runGLSL(frag, slideIndex) {
+    setLiveError('');
+    setLiveOutput('');
+    try {
+      if (glslMeshes.has(slideIndex)) {
+        const { mat } = glslMeshes.get(slideIndex);
+        mat.fragmentShader = frag;
+        mat.needsUpdate = true;
+        return;
+      }
+      const liveGroup = getLiveGroup(slideIndex);
+      clearLiveGroup(slideIndex);
+      const mat = new THREE.ShaderMaterial({
+        vertexShader: GLSL_VERT,
+        fragmentShader: frag,
+        uniforms: {
+          u_time: { value: 0 },
+          u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+        },
+      });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(9, 6), mat);
+      mesh.userData.glslShader = true;
+      liveGroup.add(mesh);
+      glslMeshes.set(slideIndex, { mesh, mat });
+    } catch (e) {
+      setLiveError(e.message);
+    }
+  }
+
+  function runPython(code, slideIndex) {
+    setLiveError('');
+    setLiveOutput('');
+    if (!pyodideReady) {
+      if (!pyodideLoading) initPyodide(code, slideIndex);
+      else setLiveOutput('Python runtime loading…');
+      return;
+    }
+    const liveGroup = getLiveGroup(slideIndex);
+    clearLiveGroup(slideIndex);
+    const outputLines = [];
+
+    // Expose bridge on window so Python can reach it via `import js`
+    // (pyodideInstance.globals maps to Python globals, not window)
+    window._md3d_clear  = () => clearLiveGroup(slideIndex);
+    window._md3d_print  = (msg) => outputLines.push(String(msg));
+    window._md3d_box    = (x, y, z, size, color) => {
+      const m = new THREE.Mesh(
+        new THREE.BoxGeometry(size, size, size),
+        new THREE.MeshBasicMaterial({ color: color || 0x5dfdcb, wireframe: true, transparent: true, opacity: 0.7 })
+      );
+      m.position.set(x, y, z);
+      liveGroup.add(m);
+    };
+    window._md3d_sphere = (x, y, z, r, color) => {
+      const m = new THREE.Mesh(
+        new THREE.SphereGeometry(r || 0.5, 12, 8),
+        new THREE.MeshBasicMaterial({ color: color || 0x5dfdcb, wireframe: true, transparent: true, opacity: 0.7 })
+      );
+      m.position.set(x, y, z);
+      liveGroup.add(m);
+    };
+    window._md3d_points = (ptsJson, color) => {
+      JSON.parse(ptsJson).forEach(([x, y, z]) => {
+        const m = new THREE.Mesh(
+          new THREE.SphereGeometry(0.06, 6, 4),
+          new THREE.MeshBasicMaterial({ color: color || 0x5dfdcb })
+        );
+        m.position.set(x, y, z);
+        liveGroup.add(m);
+      });
+    };
+    window._md3d_line   = (ptsJson, color) => {
+      const flat = [];
+      JSON.parse(ptsJson).forEach(([x, y, z]) => flat.push(x, y, z));
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(flat, 3));
+      liveGroup.add(new THREE.Line(geom, new THREE.LineBasicMaterial({ color: color || 0x5dfdcb })));
+    };
+
+    const setup = `
+import js as _js, json as _json
+class _Three:
+    def clear(self): _js._md3d_clear()
+    def box(self, x=0, y=0, z=0, size=1, color=None): _js._md3d_box(x, y, z, size, color)
+    def sphere(self, x=0, y=0, z=0, radius=0.5, color=None): _js._md3d_sphere(x, y, z, radius, color)
+    def points(self, pts, color=None): _js._md3d_points(_json.dumps(pts), color)
+    def line(self, pts, color=None): _js._md3d_line(_json.dumps(pts), color)
+    def plot(self, pts, color=None): self.points(pts, color)
+three = _Three()
+def print(*a, **kw): _js._md3d_print(' '.join(str(x) for x in a))
+`;
+    try {
+      pyodideInstance.runPython(setup + '\n' + code);
+      if (outputLines.length) setLiveOutput(outputLines.join('\n'));
+    } catch (e) {
+      setLiveError(String(e));
+    }
+  }
+
+  function initPyodide(pendingCode, slideIndex) {
+    pyodideLoading = true;
+    setLiveOutput('Loading Python runtime (~8 MB)…');
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+    s.onerror = () => {
+      setLiveError('Failed to load Pyodide script from CDN.');
+      pyodideLoading = false;
+    };
+    s.onload = () => {
+      window.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/' })
+        .then(py => {
+          pyodideInstance = py;
+          pyodideReady = true;
+          pyodideLoading = false;
+          setLiveOutput('');
+          if (pendingCode) runPython(pendingCode, slideIndex);
+        }).catch(e => {
+          setLiveError('Pyodide failed to initialise: ' + e.message);
+          pyodideLoading = false;
+        });
+    };
+    document.head.appendChild(s);
+  }
+
+  function debounce(fn, delay) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+  }
+
+  function cmModeForLang(lang) {
+    if (lang === 'glsl') return 'text/x-glsl';
+    if (lang === 'python') return 'python';
+    return 'javascript';
+  }
+
+  function initLivePanel() {
+    if (!livePanel || typeof CodeMirror === 'undefined') return;
+    cmEditor = CodeMirror(liveEditorMount, {
+      value: '',
+      mode: 'javascript',
+      lineNumbers: true,
+      matchBrackets: true,
+      indentUnit: 2,
+      tabSize: 2,
+      indentWithTabs: false,
+      lineWrapping: false,
+      extraKeys: { Tab: cm => cm.execCommand('indentMore') },
+    });
+    cmEditor.on('focus', () => { cmFocused = true; });
+    cmEditor.on('blur',  () => { cmFocused = false; });
+    cmEditor.on('change', debounce(() => {
+      if (liveCurrentSlide < 0 || liveCollapsed) return;
+      runCurrentBlock();
+    }, 400));
+
+    if (liveCollapseBtn) {
+      liveCollapseBtn.onclick = () => {
+        liveCollapsed = !liveCollapsed;
+        livePanel.classList.toggle('collapsed', liveCollapsed);
+        const svg = liveCollapseBtn.querySelector('svg path');
+        if (svg) svg.setAttribute('d', liveCollapsed ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6');
+      };
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'e' || e.key === 'E') && document.activeElement.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        if (livePanel && livePanel.classList.contains('visible')) {
+          liveCollapsed = !liveCollapsed;
+          livePanel.classList.toggle('collapsed', liveCollapsed);
+        }
+      }
+    });
+
+    syncLivePanel(0);
+  }
+
+  function runCurrentBlock() {
+    const blocks = SLIDE_LIVECODE[liveCurrentSlide] || [];
+    if (!blocks.length) return;
+    const block = blocks[liveCurrentTab] || blocks[0];
+    const code = cmEditor ? cmEditor.getValue() : block.code;
+    const lang = block.lang;
+    if (lang === 'glsl') runGLSL(code, liveCurrentSlide);
+    else if (lang === 'python') runPython(code, liveCurrentSlide);
+    else runJS(code, liveCurrentSlide);
+  }
+
+  function syncLivePanel(slideIndex) {
+    if (!livePanel) return;
+    const blocks = SLIDE_LIVECODE[slideIndex] || [];
+
+    if (!blocks.length) {
+      livePanel.classList.remove('visible');
+      document.body.classList.remove('live-open');
+      liveCurrentSlide = -1;
+      return;
+    }
+
+    liveCurrentSlide = slideIndex;
+    liveCurrentTab = Math.min(liveCurrentTab, blocks.length - 1);
+    livePanel.classList.add('visible');
+    document.body.classList.add('live-open');
+
+    // Build tabs if multiple blocks
+    if (liveTabsEl) {
+      liveTabsEl.innerHTML = '';
+      if (blocks.length > 1) {
+        blocks.forEach((b, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'live-tab' + (i === liveCurrentTab ? ' active' : '');
+          btn.textContent = (i + 1) + '. ' + b.lang;
+          btn.onclick = () => {
+            liveCurrentTab = i;
+            loadBlock(blocks[i]);
+            liveTabsEl.querySelectorAll('.live-tab').forEach((t, j) => t.classList.toggle('active', j === i));
+          };
+          liveTabsEl.appendChild(btn);
+        });
+      }
+    }
+
+    loadBlock(blocks[liveCurrentTab]);
+  }
+
+  function loadBlock(block) {
+    if (!cmEditor) return;
+    if (liveLangBadge) liveLangBadge.textContent = block.lang;
+    cmEditor.setOption('mode', cmModeForLang(block.lang));
+    cmEditor.setValue(block.code);
+    cmEditor.refresh();
+    setLiveError('');
+    setLiveOutput('');
+    // Run immediately when loading a new slide
+    if (block.lang === 'glsl') runGLSL(block.code, liveCurrentSlide);
+    else if (block.lang === 'python') runPython(block.code, liveCurrentSlide);
+    else runJS(block.code, liveCurrentSlide);
+  }
+
+  // Update GLSL time uniforms in the animate loop
+  const _origAnimate = animate;
+  (function patchAnimate() {
+    const clock2 = new THREE.Clock();
+    const _animLoop = animate;
+    // Patch: the animate function already runs via requestAnimationFrame.
+    // We piggyback GLSL uniform updates onto the per-frame logic instead.
+  })();
+
+  // Hook GLSL uniform updates into the existing animate loop
+  // by storing the patch in a sentinel checked each frame.
+  window.__liveGlslUpdate = function(t) {
+    glslMeshes.forEach(({ mat }) => {
+      if (mat.uniforms && mat.uniforms.u_time) {
+        mat.uniforms.u_time.value = t;
+        mat.uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
+      }
+    });
+  };
+
+  initLivePanel();
+  // ────────────────────────────────────────────────────────────────────────
+})();
+</script>
+</body>
+</html>
