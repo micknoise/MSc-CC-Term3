@@ -107,6 +107,9 @@ Documentation serves three audiences:
 
 **The field** — if your work is good, other people will want to build on it. They need to know what you did, how you did it, and what you learned. Reproducibility and extendability depend on documentation.
 
+["Audiences"](https://micknoise.github.io/MSc-CC-Term3/audiences.html)
+
+
 > **Speaker note:** The "future self" argument is the one that lands most immediately with students. Anyone who's ever returned to an old project and found they can't remember why the code is structured the way it is knows this pain. Research documentation is just good engineering practice taken seriously. The examiner argument is the one that matters most for assessment. The field argument is the one that matters most for contribution.
 
 ---
@@ -127,9 +130,10 @@ Think of documentation as operating at five layers, from the most granular to th
 
 Layers 1–3 are **records**. Layer 4 is **reflection**. Layer 5 is **analysis**. You need all five, but they serve different purposes and often live in different places.
 
+["Five Layers"](https://micknoise.github.io/MSc-CC-Term3/five-layers.html)
+
 > **Speaker note:** Walk through each layer with a concrete example. Layer 1: "here's the system running." Layer 2: "here's the README with architecture details and how to run the code." Layer 3: "here's my process log showing that I tried three different loss functions before settling on this one." Layer 4: "here's my reflective note explaining that the spectral loss produced more musically interesting results than the waveform loss, which surprised me because the literature favours waveform loss for perceptual quality." Layer 5: "here's my argument that this reveals a tension between perceptual fidelity and aesthetic interest in neural audio synthesis." Each layer builds on the ones below it.
 
-["Five Layers"](five-layers.html)
 
 ---
 
