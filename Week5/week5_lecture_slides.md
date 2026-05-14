@@ -129,6 +129,8 @@ Layers 1–3 are **records**. Layer 4 is **reflection**. Layer 5 is **analysis**
 
 > **Speaker note:** Walk through each layer with a concrete example. Layer 1: "here's the system running." Layer 2: "here's the README with architecture details and how to run the code." Layer 3: "here's my process log showing that I tried three different loss functions before settling on this one." Layer 4: "here's my reflective note explaining that the spectral loss produced more musically interesting results than the waveform loss, which surprised me because the literature favours waveform loss for perceptual quality." Layer 5: "here's my argument that this reveals a tension between perceptual fidelity and aesthetic interest in neural audio synthesis." Each layer builds on the ones below it.
 
+["Five Layers"](five-layers.html)
+
 ---
 
 ## Slide 9 — Where documentation lives

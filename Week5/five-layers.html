@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Five Layers of Documentation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<style>
+  body { margin: 0; font-family: 'Roboto', sans-serif; background: #fafafa; }
+  #legend {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #2a2a2a;
+    padding: 18px 22px;
+    border: 1px solid #d0d0d0;
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 300px;
+    font-weight: 300;
+  }
+  #legend h1 {
+    font-size: 10px;
+    margin: 0 0 14px 0;
+    letter-spacing: 0.3em;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+  #legend ol {
+    margin: 0;
+    padding-left: 22px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+  }
+  #legend li { margin-bottom: 5px; color: #555; }
+  #legend li b { color: #1a1a1a; font-weight: 500; }
+  #legend .meta {
+    color: #777;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e0e0e0;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+  #legend .meta b { color: #8a7a4a; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div id="legend">
+  <h1>Five Layers of Documentation</h1>
+  <ol>
+    <li><b>Artefact</b> — primary evidence</li>
+    <li><b>Technical spec</b> — reproducibility</li>
+    <li><b>Process record</b> — the lab notebook</li>
+    <li><b>Reflective commentary</b> — tacit→explicit</li>
+    <li><b>Critical framing</b> — argument</li>
+  </ol>
+  <div class="meta" id="hint">
+    <b>1–5</b> jump to layer &nbsp;·&nbsp; <b>0</b> overview<br>
+    <b>WASD</b> move &nbsp;·&nbsp; <b>Q/E</b> down/up &nbsp;·&nbsp; drag to look
+  </div>
+</div>
+
+<a-scene background="color: #fafafa" 
+         fog="type: exponential; color: #fafafa; density: 0.022"
+         renderer="antialias: true; colorManagement: true; alpha: false"
+         vr-mode-ui="enabled: false"
+         device-orientation-permission-ui="enabled: false"
+         loading-screen="dotsColor: #1a1a1a; backgroundColor: #fafafa">
+
+  <a-light type="ambient" color="#cccccc" intensity="0.8"></a-light>
+  <a-light type="directional" position="5 10 5" color="#888888" intensity="0.3"></a-light>
+
+  <a-entity id="rig" position="0 4 14">
+    <a-camera wasd-controls="acceleration: 35; fly: true" 
+              look-controls="pointerLockEnabled: false; touchEnabled: true; magicWindowTrackingEnabled: false"
+              fov="70">
+    </a-camera>
+  </a-entity>
+
+  <!-- Palette: off-white #fafafa · primary #1a1a1a · mid-grey #888 · faint #d8d8d8 · accent #a89568 -->
+
+  <!-- LAYER 1 — ARTEFACT -->
+  <a-entity id="layer1" position="0 0 0">
+    <a-ring color="#c0c0c0" radius-inner="2.4" radius-outer="2.42" 
+            rotation="-90 0 0" position="0 -0.01 0"></a-ring>
+    <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 50000; easing: linear">
+      <a-dodecahedron radius="1.1" color="#1a1a1a" wireframe="true" position="0 0.6 0"></a-dodecahedron>
+      <a-box width="1.4" height="0.3" depth="1.4" color="#888888" wireframe="true"
+             position="0 -0.1 0" rotation="0 22 0"></a-box>
+      <a-sphere radius="0.08" color="#a89568" position="0.3 1.4 -0.2"
+                animation="property: position; to: 0.3 1.55 -0.2; dir: alternate; loop: true; dur: 2200; easing: easeInOutSine"></a-sphere>
+    </a-entity>
+    <a-text value="01  ARTEFACT" position="0 -0.9 3.4" align="center" color="#a89568" width="5"></a-text>
+    <a-text value="the system  ·  the code  ·  the performance" position="0 -1.25 3.4" 
+            align="center" color="#888888" width="4.2"></a-text>
+  </a-entity>
+
+  <!-- LAYER 2 — TECHNICAL SPECIFICATION -->
+  <a-entity id="layer2" position="0 4 0">
+    <a-entity animation="property: rotation; to: 0 -360 0; loop: true; dur: 70000; easing: linear">
+      <a-sphere radius="0.08" color="#1a1a1a" position="1 1 1"></a-sphere>
+      <a-sphere radius="0.08" color="#1a1a1a" position="-1 1 1"></a-sphere>
+      <a-sphere radius="0.08" color="#1a1a1a" position="1 -1 1"></a-sphere>
+      <a-sphere radius="0.08" color="#1a1a1a" position="-1 -1 1"></a-sphere>
+      <a-sphere radius="0.08" color="#1a1a1a" position="1 1 -1"></a-sphere>
+      <a-sphere radius="0.08" color="#1a1a1a" position="-1 1 -1"></a-sphere>
+      <a-sphere radius="0.08" color="#1a1a1a" position="1 -1 -1"></a-sphere>
+      <a-sphere radius="0.08" color="#1a1a1a" position="-1 -1 -1"></a-sphere>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="0 -1 1" rotation="0 0 90"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="0 -1 -1" rotation="0 0 90"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="1 -1 0" rotation="90 0 0"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="-1 -1 0" rotation="90 0 0"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="0 1 1" rotation="0 0 90"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="0 1 -1" rotation="0 0 90"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="1 1 0" rotation="90 0 0"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="-1 1 0" rotation="90 0 0"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="1 0 1"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="-1 0 1"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="1 0 -1"></a-cylinder>
+      <a-cylinder radius="0.012" height="2" color="#888888" position="-1 0 -1"></a-cylinder>
+      <a-cylinder radius="0.006" height="3.46" color="#a89568" opacity="0.5"
+        position="0 0 0" rotation="35 45 35"
+        animation="property: material.opacity; to: 0.1; dir: alternate; loop: true; dur: 2600"></a-cylinder>
+      <a-cylinder radius="0.006" height="3.46" color="#a89568" opacity="0.5"
+        position="0 0 0" rotation="-35 45 35"
+        animation="property: material.opacity; to: 0.1; dir: alternate; loop: true; dur: 3300"></a-cylinder>
+    </a-entity>
+    <a-text value="02  TECHNICAL SPECIFICATION" position="0 -1.7 3.4" align="center" color="#a89568" width="5.6"></a-text>
+    <a-text value="architecture  ·  dependencies  ·  parameters" position="0 -2.05 3.4" 
+            align="center" color="#888888" width="4.2"></a-text>
+  </a-entity>
+
+  <!-- LAYER 3 — PROCESS RECORD -->
+  <a-entity id="layer3" position="0 8 0">
+    <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear">
+      <a-cylinder radius="0.012" height="5" color="#888888" rotation="0 0 90"></a-cylinder>
+      <a-sphere radius="0.12" color="#1a1a1a" position="-2.2 0 0"
+        animation="property: scale; from: 1 1 1; to: 1.35 1.35 1.35; dir: alternate; loop: true; dur: 1900; delay: 0"></a-sphere>
+      <a-sphere radius="0.14" color="#1a1a1a" position="-1.5 0 0"
+        animation="property: scale; from: 1 1 1; to: 1.35 1.35 1.35; dir: alternate; loop: true; dur: 1900; delay: 300"></a-sphere>
+      <a-sphere radius="0.16" color="#1a1a1a" position="-0.7 0 0"
+        animation="property: scale; from: 1 1 1; to: 1.35 1.35 1.35; dir: alternate; loop: true; dur: 1900; delay: 600"></a-sphere>
+      <a-sphere radius="0.18" color="#1a1a1a" position="0 0 0"
+        animation="property: scale; from: 1 1 1; to: 1.35 1.35 1.35; dir: alternate; loop: true; dur: 1900; delay: 900"></a-sphere>
+      <a-sphere radius="0.2" color="#1a1a1a" position="0.7 0 0"
+        animation="property: scale; from: 1 1 1; to: 1.35 1.35 1.35; dir: alternate; loop: true; dur: 1900; delay: 1200"></a-sphere>
+      <a-sphere radius="0.22" color="#1a1a1a" position="1.5 0 0"
+        animation="property: scale; from: 1 1 1; to: 1.35 1.35 1.35; dir: alternate; loop: true; dur: 1900; delay: 1500"></a-sphere>
+      <a-sphere radius="0.24" color="#a89568" position="2.2 0 0"
+        animation="property: scale; from: 1 1 1; to: 1.35 1.35 1.35; dir: alternate; loop: true; dur: 1900; delay: 1800"></a-sphere>
+      <a-box width="0.02" height="0.15" depth="0.02" color="#d8d8d8" position="-2.2 -0.3 0"></a-box>
+      <a-box width="0.02" height="0.15" depth="0.02" color="#d8d8d8" position="-1.5 -0.3 0"></a-box>
+      <a-box width="0.02" height="0.15" depth="0.02" color="#d8d8d8" position="-0.7 -0.3 0"></a-box>
+      <a-box width="0.02" height="0.15" depth="0.02" color="#d8d8d8" position="0 -0.3 0"></a-box>
+      <a-box width="0.02" height="0.15" depth="0.02" color="#d8d8d8" position="0.7 -0.3 0"></a-box>
+      <a-box width="0.02" height="0.15" depth="0.02" color="#d8d8d8" position="1.5 -0.3 0"></a-box>
+      <a-box width="0.02" height="0.15" depth="0.02" color="#d8d8d8" position="2.2 -0.3 0"></a-box>
+    </a-entity>
+    <a-text value="03  PROCESS RECORD" position="0 -1.7 3.4" align="center" color="#a89568" width="5"></a-text>
+    <a-text value="dated  ·  sequential  ·  factual" position="0 -2.05 3.4" 
+            align="center" color="#888888" width="4.2"></a-text>
+  </a-entity>
+
+  <!-- LAYER 4 — REFLECTIVE COMMENTARY -->
+  <a-entity id="layer4" position="0 12 0">
+    <a-icosahedron radius="0.7" color="#1a1a1a" wireframe="true"
+      animation="property: scale; from: 1 1 1; to: 1.15 1.15 1.15; dir: alternate; loop: true; dur: 3500; easing: easeInOutSine"></a-icosahedron>
+    <a-icosahedron radius="0.45" color="#888888" wireframe="true"
+      animation="property: rotation; to: 360 360 0; loop: true; dur: 25000; easing: linear"></a-icosahedron>
+    <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 20000; easing: linear">
+      <a-sphere radius="0.07" color="#a89568" position="1.8 0 0"></a-sphere>
+      <a-sphere radius="0.07" color="#1a1a1a" position="-1.8 0 0"></a-sphere>
+    </a-entity>
+    <a-entity animation="property: rotation; to: 360 0 0; loop: true; dur: 24000; easing: linear">
+      <a-sphere radius="0.07" color="#1a1a1a" position="0 1.6 0"></a-sphere>
+      <a-sphere radius="0.07" color="#1a1a1a" position="0 -1.6 0"></a-sphere>
+    </a-entity>
+    <a-entity animation="property: rotation; to: 360 360 0; loop: true; dur: 30000; easing: linear">
+      <a-sphere radius="0.07" color="#1a1a1a" position="0 0 1.7"></a-sphere>
+      <a-sphere radius="0.07" color="#1a1a1a" position="0 0 -1.7"></a-sphere>
+    </a-entity>
+    <a-text value="04  REFLECTIVE COMMENTARY" position="0 -2.1 3.4" align="center" color="#a89568" width="5.6"></a-text>
+    <a-text value="what surprised you  ·  what it meant  ·  what changed" 
+            position="0 -2.45 3.4" align="center" color="#888888" width="4.2"></a-text>
+  </a-entity>
+
+  <!-- LAYER 5 — CRITICAL FRAMING -->
+  <a-entity id="layer5" position="0 16 0">
+    <a-entity animation="property: rotation; to: 0 -360 0; loop: true; dur: 100000; easing: linear">
+      <a-torus color="#1a1a1a" radius="3.2" radius-tubular="0.012" 
+               rotation="-90 0 0" segments-radial="80"></a-torus>
+      <a-torus color="#888888" opacity="0.5" radius="4.0" radius-tubular="0.008"
+               rotation="-90 0 0" segments-radial="80"></a-torus>
+      <a-tetrahedron radius="0.35" color="#a89568" wireframe="true"
+        animation="property: rotation; to: 360 360 0; loop: true; dur: 14000; easing: linear"></a-tetrahedron>
+      <a-sphere radius="0.06" color="#1a1a1a" position="3.2 0 0"></a-sphere>
+      <a-sphere radius="0.06" color="#1a1a1a" position="-3.2 0 0"></a-sphere>
+      <a-sphere radius="0.06" color="#1a1a1a" position="0 0 3.2"></a-sphere>
+      <a-sphere radius="0.06" color="#1a1a1a" position="0 0 -3.2"></a-sphere>
+      <a-sphere radius="0.05" color="#888888" position="2.26 0 2.26"></a-sphere>
+      <a-sphere radius="0.05" color="#888888" position="-2.26 0 2.26"></a-sphere>
+      <a-sphere radius="0.05" color="#888888" position="2.26 0 -2.26"></a-sphere>
+      <a-sphere radius="0.05" color="#888888" position="-2.26 0 -2.26"></a-sphere>
+      <a-cylinder radius="0.004" height="3.2" color="#d8d8d8" position="1.6 0 0" rotation="0 0 90"></a-cylinder>
+      <a-cylinder radius="0.004" height="3.2" color="#d8d8d8" position="-1.6 0 0" rotation="0 0 90"></a-cylinder>
+      <a-cylinder radius="0.004" height="3.2" color="#d8d8d8" position="0 0 1.6" rotation="90 0 0"></a-cylinder>
+      <a-cylinder radius="0.004" height="3.2" color="#d8d8d8" position="0 0 -1.6" rotation="90 0 0"></a-cylinder>
+    </a-entity>
+    <a-text value="05  CRITICAL FRAMING" position="0 -1.7 4.2" align="center" color="#a89568" width="5"></a-text>
+    <a-text value="argument  ·  gap  ·  field" position="0 -2.05 4.2" 
+            align="center" color="#888888" width="4.2"></a-text>
+  </a-entity>
+
+  <a-cylinder radius="0.005" height="16" color="#dddddd" position="0 8 0"></a-cylinder>
+
+  <a-text value="ANALYSIS" position="-6 16 0" rotation="0 30 0" color="#b8b8b8" width="3.5"></a-text>
+  <a-text value="REFLECTION" position="-6 12 0" rotation="0 30 0" color="#b8b8b8" width="3.5"></a-text>
+  <a-text value="RECORDS" position="-6 4 0" rotation="0 30 0" color="#b8b8b8" width="3.5"></a-text>
+  <a-text value="interpretive" position="6 16 0" rotation="0 -30 0" color="#b8b8b8" width="3.5" align="right"></a-text>
+  <a-text value="granular" position="6 0 0" rotation="0 -30 0" color="#b8b8b8" width="3.5" align="right"></a-text>
+
+  <a-sphere radius="0.025" color="#b8b8b8" position="8 6 -6" opacity="0.5"
+            animation="property: position; to: 8 10 -6; dir: alternate; loop: true; dur: 8000"></a-sphere>
+  <a-sphere radius="0.025" color="#b8b8b8" position="-7 3 -8" opacity="0.5"
+            animation="property: position; to: -7 7 -8; dir: alternate; loop: true; dur: 10000"></a-sphere>
+  <a-sphere radius="0.025" color="#b8b8b8" position="5 14 -10" opacity="0.5"
+            animation="property: position; to: 5 18 -10; dir: alternate; loop: true; dur: 9000"></a-sphere>
+  <a-sphere radius="0.025" color="#b8b8b8" position="-9 9 4" opacity="0.5"
+            animation="property: position; to: -9 13 4; dir: alternate; loop: true; dur: 11000"></a-sphere>
+
+</a-scene>
+
+<script>
+  const rig = document.getElementById('rig');
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  let t = 0;
+  let userActive = false;
+  let lastInteraction = 0;
+
+  // Eye position roughly at the layer's centre, camera looking flat forward.
+  // Layer 1's artefact extends from y=0 (ground ring) up to y≈1.5 (the floating
+  // accent sphere), centred around y≈0.7. Place eye at y=1 looking at it.
+  const viewpoints = {
+    '1': { pos: [0, 1.0, 6],   rot: [0, 0, 0] },    // Artefact
+    '2': { pos: [0, 4.0, 6],   rot: [0, 0, 0] },    // Technical spec
+    '3': { pos: [0, 8.0, 6],   rot: [0, 0, 0] },    // Process record
+    '4': { pos: [0, 12.0, 6],  rot: [0, 0, 0] },    // Reflective commentary
+    '5': { pos: [0, 16.0, 7],  rot: [0, 0, 0] },    // Critical framing (wider ring → pull back)
+    '0': { pos: [12, 10, 16],  rot: [-18, 35, 0] }, // Overview
+  };
+
+  let tween = null;
+  function teleport(key) {
+    const v = viewpoints[key];
+    if (!v) return;
+    const startPos = rig.getAttribute('position');
+    const startRot = rig.getAttribute('rotation');
+    const t0 = performance.now();
+    const duration = 900;
+    userActive = true;
+    lastInteraction = performance.now() + duration;
+    tween = {
+      from: { px: startPos.x, py: startPos.y, pz: startPos.z,
+              rx: startRot.x, ry: startRot.y, rz: startRot.z },
+      to:   { px: v.pos[0], py: v.pos[1], pz: v.pos[2],
+              rx: v.rot[0], ry: v.rot[1], rz: v.rot[2] },
+      t0, duration
+    };
+  }
+
+  function applyTween(now) {
+    if (!tween) return false;
+    const k = Math.min(1, (now - tween.t0) / tween.duration);
+    const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k + 2, 3) / 2;
+    const f = tween.from, to = tween.to;
+    rig.setAttribute('position', {
+      x: f.px + (to.px - f.px) * e,
+      y: f.py + (to.py - f.py) * e,
+      z: f.pz + (to.pz - f.pz) * e,
+    });
+    rig.setAttribute('rotation', {
+      x: f.rx + (to.rx - f.rx) * e,
+      y: f.ry + (to.ry - f.ry) * e,
+      z: f.rz + (to.rz - f.rz) * e,
+    });
+    if (k >= 1) { tween = null; return false; }
+    return true;
+  }
+
+  // Q/E vertical movement — A-Frame's stock wasd-controls don't include this,
+  // so we track key state and apply continuous y movement in the tick loop.
+  const verticalKeys = { q: false, e: false };
+  const VERTICAL_SPEED = 6; // units per second
+  let lastFrameTime = performance.now();
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key in viewpoints) { teleport(e.key); return; }
+    const k = e.key.toLowerCase();
+    if (k === 'q' || k === 'e') {
+      verticalKeys[k] = true;
+      userActive = true;
+      lastInteraction = performance.now();
+      return;
+    }
+    userActive = true;
+    lastInteraction = performance.now();
+  });
+  window.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'q' || k === 'e') verticalKeys[k] = false;
+  });
+  ['mousedown', 'touchstart', 'touchmove'].forEach(evt => {
+    window.addEventListener(evt, () => {
+      userActive = true;
+      lastInteraction = performance.now();
+    }, { passive: true });
+  });
+
+  function tick() {
+    const now = performance.now();
+    const dt = Math.min(0.1, (now - lastFrameTime) / 1000);
+    lastFrameTime = now;
+    const tweening = applyTween(now);
+
+    // Apply Q/E vertical movement (independent of WASD's planar/fly mode).
+    if (!tweening && (verticalKeys.q || verticalKeys.e)) {
+      const p = rig.getAttribute('position');
+      const dy = (verticalKeys.e ? 1 : 0) - (verticalKeys.q ? 1 : 0);
+      rig.setAttribute('position', {
+        x: p.x, y: p.y + dy * VERTICAL_SPEED * dt, z: p.z
+      });
+    }
+
+    const pauseMs = isTouch ? 5000 : 3000;
+    if (now - lastInteraction > pauseMs) userActive = false;
+    if (!userActive && !tweening) {
+      t += 0.0008;
+      const r = 14;
+      const x = Math.sin(t) * r;
+      const z = Math.cos(t) * r;
+      const y = 8 + Math.sin(t * 0.3) * 4;
+      rig.setAttribute('position', `${x} ${y} ${z}`);
+      rig.setAttribute('rotation', `0 ${(t * 180 / Math.PI) % 360} 0`);
+    }
+    requestAnimationFrame(tick);
+  }
+  const scene = document.querySelector('a-scene');
+  if (scene.hasLoaded) tick();
+  else scene.addEventListener('loaded', tick);
+</script>
+
+</body>
+</html>
