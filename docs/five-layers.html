@@ -343,7 +343,15 @@
     }
 
     const pauseMs = isTouch ? 5000 : 3000;
-    if (now - lastInteraction > pauseMs) userActive = false;
+    if (now - lastInteraction > pauseMs) {
+      if (userActive) {
+        // Sync t to the camera's current x/z angle so the orbit resumes
+        // from the user's current position with no visible jump.
+        const p = rig.getAttribute('position');
+        t = Math.atan2(p.x, p.z);
+      }
+      userActive = false;
+    }
     if (!userActive && !tweening) {
       t += 0.0008;
       const r = 14;
