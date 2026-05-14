@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Documenting for Different Audiences</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<style>
+  body { margin: 0; font-family: 'Roboto', sans-serif; background: #fafafa; }
+  #legend {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #2a2a2a;
+    padding: 18px 22px;
+    border: 1px solid #d0d0d0;
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 320px;
+    font-weight: 300;
+  }
+  #legend h1 {
+    font-size: 10px;
+    margin: 0 0 14px 0;
+    letter-spacing: 0.3em;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+  #legend .ring {
+    margin-bottom: 10px;
+    padding-left: 12px;
+    border-left: 1px solid #c0c0c0;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+  }
+  #legend .ring b { color: #1a1a1a; font-weight: 500; }
+  #legend .who {
+    color: #888;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  #legend .principle {
+    color: #8a7a4a;
+    font-style: italic;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e0e0e0;
+    font-size: 11px;
+    line-height: 1.5;
+    font-weight: 300;
+  }
+  #legend .meta {
+    color: #777;
+    margin-top: 12px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
+    line-height: 1.7;
+  }
+  #legend .meta b { color: #8a7a4a; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div id="legend">
+  <h1>Documenting for Different Audiences</h1>
+  <div class="ring">
+    <div class="who">Inner ring · for you</div>
+    <b>Raw process log</b> — messy, dated, honest
+  </div>
+  <div class="ring">
+    <div class="who">Middle ring · for the examiner</div>
+    <b>Curated evidence</b> — selected, annotated
+  </div>
+  <div class="ring">
+    <div class="who">Outer ring · for the field</div>
+    <b>Reproducibility package</b> — code, README, method
+  </div>
+  <div class="principle">Write the inner ring first. The others are extracted from it.</div>
+  <div class="meta" id="hint">
+    <b>1</b> inner &nbsp;·&nbsp; <b>2</b> middle &nbsp;·&nbsp; <b>3</b> outer &nbsp;·&nbsp; <b>0</b> aerial<br>
+    <b>WASD</b> move &nbsp;·&nbsp; <b>Q/E</b> down/up &nbsp;·&nbsp; drag to look
+  </div>
+</div>
+
+<a-scene background="color: #fafafa" 
+         fog="type: exponential; color: #fafafa; density: 0.018"
+         renderer="antialias: true; colorManagement: true; alpha: false"
+         vr-mode-ui="enabled: false"
+         device-orientation-permission-ui="enabled: false"
+         loading-screen="dotsColor: #1a1a1a; backgroundColor: #fafafa">
+
+  <a-light type="ambient" color="#cccccc" intensity="0.8"></a-light>
+  <a-light type="directional" position="5 10 5" color="#888888" intensity="0.3"></a-light>
+
+  <a-entity id="rig" position="0 18 0.01" rotation="-89 0 0">
+    <a-camera wasd-controls="acceleration: 35; fly: true"
+              look-controls="pointerLockEnabled: false; touchEnabled: true; magicWindowTrackingEnabled: false"
+              fov="70">
+    </a-camera>
+  </a-entity>
+
+  <!-- Palette: off-white #fafafa · primary #1a1a1a · mid-grey #888 · faint #d8d8d8 · accent #a89568 -->
+
+  <!-- Faint ground disc for spatial reference -->
+  <a-circle radius="14" color="#ececec" rotation="-90 0 0" position="0 -0.5 0" opacity="0.7"></a-circle>
+
+  <!-- ==========================================================
+       OUTER RING — for the field
+       Large, sparse, structured. The institutional layer.
+       =========================================================== -->
+  <a-entity id="ring-outer" position="0 0 0">
+    <a-torus color="#1a1a1a" radius="10" radius-tubular="0.025" 
+             rotation="-90 0 0" segments-radial="80"
+             animation="property: rotation; to: -90 360 0; loop: true; dur: 140000; easing: linear"></a-torus>
+    <a-torus color="#888888" opacity="0.5" radius="10.4" radius-tubular="0.012"
+             rotation="-90 0 0" segments-radial="80"></a-torus>
+
+    <!-- Sparse marker boxes around the outer ring: peers, citations -->
+    <a-entity animation="property: rotation; to: 0 -360 0; loop: true; dur: 200000; easing: linear">
+      <a-box width="0.2" height="0.2" depth="0.2" color="#1a1a1a" wireframe="true" position="10 0 0"></a-box>
+      <a-box width="0.2" height="0.2" depth="0.2" color="#1a1a1a" wireframe="true" position="-10 0 0"></a-box>
+      <a-box width="0.2" height="0.2" depth="0.2" color="#1a1a1a" wireframe="true" position="0 0 10"></a-box>
+      <a-box width="0.2" height="0.2" depth="0.2" color="#1a1a1a" wireframe="true" position="0 0 -10"></a-box>
+      <a-box width="0.15" height="0.15" depth="0.15" color="#888888" wireframe="true" position="7.07 0 7.07"></a-box>
+      <a-box width="0.15" height="0.15" depth="0.15" color="#888888" wireframe="true" position="-7.07 0 7.07"></a-box>
+      <a-box width="0.15" height="0.15" depth="0.15" color="#888888" wireframe="true" position="7.07 0 -7.07"></a-box>
+      <a-box width="0.15" height="0.15" depth="0.15" color="#888888" wireframe="true" position="-7.07 0 -7.07"></a-box>
+    </a-entity>
+
+    <a-text value="03  OUTER  ·  FOR THE FIELD" position="0 0.05 11.5" 
+            rotation="-90 0 0" align="center" color="#a89568" width="7"></a-text>
+    <a-text value="reproducibility  ·  README  ·  method" position="0 0.05 12.2" 
+            rotation="-90 0 0" align="center" color="#888888" width="5.5"></a-text>
+  </a-entity>
+
+  <!-- ==========================================================
+       MIDDLE RING — for the examiner
+       Curated. Deliberate. The argument.
+       =========================================================== -->
+  <a-entity id="ring-middle" position="0 0 0">
+    <a-torus color="#1a1a1a" radius="6" radius-tubular="0.03" 
+             rotation="-90 0 0" segments-radial="64"
+             animation="property: rotation; to: -90 -360 0; loop: true; dur: 100000; easing: linear"></a-torus>
+
+    <!-- 12 wireframe tetrahedra evenly spaced — selected, ordered evidence -->
+    <a-entity animation="property: rotation; to: 0 360 0; loop: true; dur: 80000; easing: linear">
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="6 0.15 0"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="5.196 0.15 3"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="3 0.15 5.196"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="0 0.15 6"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="-3 0.15 5.196"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="-5.196 0.15 3"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="-6 0.15 0"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="-5.196 0.15 -3"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="-3 0.15 -5.196"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="0 0.15 -6"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="3 0.15 -5.196"></a-tetrahedron>
+      <a-tetrahedron radius="0.2" color="#1a1a1a" wireframe="true" position="5.196 0.15 -3"></a-tetrahedron>
+    </a-entity>
+
+    <a-text value="02  MIDDLE  ·  FOR THE EXAMINER" position="0 0.05 7.2" 
+            rotation="-90 0 0" align="center" color="#a89568" width="6"></a-text>
+    <a-text value="curated  ·  annotated  ·  the argument" position="0 0.05 7.85" 
+            rotation="-90 0 0" align="center" color="#888888" width="5"></a-text>
+  </a-entity>
+
+  <!-- ==========================================================
+       INNER RING — for you
+       Dense, alive, intimate. The working memory.
+       =========================================================== -->
+  <a-entity id="ring-inner" position="0 0 0">
+    <a-torus color="#1a1a1a" radius="2.5" radius-tubular="0.035"
+             rotation="-90 0 0" segments-radial="48"
+             animation="property: rotation; to: -90 360 0; loop: true; dur: 45000; easing: linear"></a-torus>
+
+    <!-- Scattered notebook entries inside the inner ring. Slow rotation only;
+         from a top-down view these read as cluster density. -->
+    <a-entity animation="property: rotation; to: 0 -360 0; loop: true; dur: 35000; easing: linear">
+      <a-box width="0.13" height="0.13" depth="0.13" color="#1a1a1a" wireframe="true" position="1.5 0.3 0.2"></a-box>
+      <a-box width="0.1" height="0.1" depth="0.1" color="#888888" wireframe="true" position="-1.3 0.3 0.8"></a-box>
+      <a-box width="0.12" height="0.12" depth="0.12" color="#1a1a1a" wireframe="true" position="0.4 0.3 -1.6"></a-box>
+      <a-box width="0.09" height="0.09" depth="0.09" color="#888888" wireframe="true" position="-0.8 0.3 -0.6"></a-box>
+      <a-box width="0.14" height="0.14" depth="0.14" color="#1a1a1a" wireframe="true" position="1.1 0.3 -1.0"></a-box>
+      <a-box width="0.11" height="0.11" depth="0.11" color="#888888" wireframe="true" position="-1.6 0.3 -0.4"></a-box>
+      <a-box width="0.1" height="0.1" depth="0.1" color="#1a1a1a" wireframe="true" position="0.7 0.3 1.4"></a-box>
+      <a-box width="0.13" height="0.13" depth="0.13" color="#1a1a1a" wireframe="true" position="-0.3 0.3 1.7"></a-box>
+      <a-box width="0.11" height="0.11" depth="0.11" color="#888888" wireframe="true" position="1.8 0.3 0.9"></a-box>
+      <a-box width="0.09" height="0.09" depth="0.09" color="#888888" wireframe="true" position="-1.0 0.3 1.2"></a-box>
+      <a-box width="0.12" height="0.12" depth="0.12" color="#1a1a1a" wireframe="true" position="0.9 0.3 -0.3"></a-box>
+    </a-entity>
+
+    <!-- Pulsing core: the writer. The single accent. -->
+    <a-icosahedron radius="0.32" color="#a89568" wireframe="true" position="0 0.3 0"
+              animation="property: scale; from: 1 1 1; to: 1.25 1.25 1.25; dir: alternate; loop: true; dur: 2200; easing: easeInOutSine">
+    </a-icosahedron>
+
+    <a-text value="01  INNER  ·  FOR YOU" position="0 0.05 3.3" 
+            rotation="-90 0 0" align="center" color="#a89568" width="5"></a-text>
+    <a-text value="raw  ·  messy  ·  dated  ·  honest" position="0 0.05 3.7" 
+            rotation="-90 0 0" align="center" color="#888888" width="4.2"></a-text>
+  </a-entity>
+
+  <!-- ==========================================================
+       EXTRACTION FLOW — particles travelling outward.
+       The visual argument: inner feeds middle feeds outer.
+       Now in white/grey — the motion is what matters, not the colour.
+       =========================================================== -->
+
+  <!-- Static directional indicators: thin arrows showing extraction flow.
+       Subtle, do not animate — the rings themselves do the rotational work. -->
+
+</a-scene>
+
+<script>
+  const rig = document.getElementById('rig');
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  let t = 0;
+  let userActive = false;
+  let lastInteraction = 0;
+
+  // Top-down viewpoints. The camera stays above the rings looking straight 
+  // down. Different y heights frame the appropriate ring at the right scale.
+  // Pitch -89 (not -90) avoids gimbal-lock issues with look-controls.
+  const viewpoints = {
+    '1': { pos: [0, 5,  0.01], rot: [-89, 0, 0] },  // Inner: low and close → fills view
+    '2': { pos: [0, 11, 0.01], rot: [-89, 0, 0] },  // Middle: mid height
+    '3': { pos: [0, 19, 0.01], rot: [-89, 0, 0] },  // Outer: highest, frames all
+    '0': { pos: [0, 22, 0.01], rot: [-89, 0, 0] },  // Aerial overview (all three)
+  };
+
+  let tween = null;
+  function teleport(key) {
+    const v = viewpoints[key];
+    if (!v) return;
+    const startPos = rig.getAttribute('position');
+    const startRot = rig.getAttribute('rotation');
+    const t0 = performance.now();
+    const duration = 900;
+    userActive = true;
+    lastInteraction = performance.now() + duration;
+    tween = {
+      from: { px: startPos.x, py: startPos.y, pz: startPos.z,
+              rx: startRot.x, ry: startRot.y, rz: startRot.z },
+      to:   { px: v.pos[0], py: v.pos[1], pz: v.pos[2],
+              rx: v.rot[0], ry: v.rot[1], rz: v.rot[2] },
+      t0, duration
+    };
+  }
+
+  function applyTween(now) {
+    if (!tween) return false;
+    const k = Math.min(1, (now - tween.t0) / tween.duration);
+    const e = k < 0.5 ? 4*k*k*k : 1 - Math.pow(-2*k + 2, 3) / 2;
+    const f = tween.from, to = tween.to;
+    rig.setAttribute('position', {
+      x: f.px + (to.px - f.px) * e,
+      y: f.py + (to.py - f.py) * e,
+      z: f.pz + (to.pz - f.pz) * e,
+    });
+    rig.setAttribute('rotation', {
+      x: f.rx + (to.rx - f.rx) * e,
+      y: f.ry + (to.ry - f.ry) * e,
+      z: f.rz + (to.rz - f.rz) * e,
+    });
+    if (k >= 1) { tween = null; return false; }
+    return true;
+  }
+
+  // Q/E vertical movement
+  const verticalKeys = { q: false, e: false };
+  const VERTICAL_SPEED = 6;
+  let lastFrameTime = performance.now();
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key in viewpoints) { teleport(e.key); return; }
+    const k = e.key.toLowerCase();
+    if (k === 'q' || k === 'e') {
+      verticalKeys[k] = true;
+      userActive = true;
+      lastInteraction = performance.now();
+      return;
+    }
+    userActive = true;
+    lastInteraction = performance.now();
+  });
+  window.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'q' || k === 'e') verticalKeys[k] = false;
+  });
+  ['mousedown', 'touchstart', 'touchmove'].forEach(evt => {
+    window.addEventListener(evt, () => {
+      userActive = true;
+      lastInteraction = performance.now();
+    }, { passive: true });
+  });
+
+  // Auto-motion: stay top-down. Slow vertical breathing (zoom in/out) so the
+  // viewer sees all three rings at different scales, with a very slight
+  // rotation so the composition isn't completely static.
+  function tick() {
+    const now = performance.now();
+    const dt = Math.min(0.1, (now - lastFrameTime) / 1000);
+    lastFrameTime = now;
+    const tweening = applyTween(now);
+
+    if (!tweening && (verticalKeys.q || verticalKeys.e)) {
+      const p = rig.getAttribute('position');
+      const dy = (verticalKeys.e ? 1 : 0) - (verticalKeys.q ? 1 : 0);
+      rig.setAttribute('position', {
+        x: p.x, y: p.y + dy * VERTICAL_SPEED * dt, z: p.z
+      });
+    }
+
+    const pauseMs = isTouch ? 5000 : 3000;
+    if (now - lastInteraction > pauseMs) userActive = false;
+    if (!userActive && !tweening) {
+      t += 0.0005;
+      // Breathe between y=13 (close, focused on inner ring) and y=22 (overview).
+      const y = 17.5 + Math.sin(t) * 4.5;
+      // Very slow yaw so the composition feels alive without breaking the plan view.
+      const yaw = (t * 8) % 360;
+      rig.setAttribute('position', `0 ${y} 0.01`);
+      rig.setAttribute('rotation', `-89 ${yaw} 0`);
+    }
+    requestAnimationFrame(tick);
+  }
+  const scene = document.querySelector('a-scene');
+  if (scene.hasLoaded) tick();
+  else scene.addEventListener('loaded', tick);
+</script>
+
+</body>
+</html>
